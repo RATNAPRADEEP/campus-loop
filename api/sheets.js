@@ -15,13 +15,18 @@ export default async function handler(req, res) {
       });
     }
 
-    const url =
-      CLOUD_API +
-      '?action=add' +
-      '&sheet=' + encodeURIComponent(sheet) +
-      '&data=' + encodeURIComponent(JSON.stringify(data));
+    const response = await fetch(CLOUD_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({
+        action: 'add',
+        sheet,
+        data
+      })
+    });
 
-    const response = await fetch(url);
     const text = await response.text();
 
     let result;
@@ -30,12 +35,18 @@ export default async function handler(req, res) {
     } catch {
       return res.status(502).json({
         success: false,
-        error: 'Apps Script returned a non-JSON response'
+        error: 'Apps Script returned a non-JSON response',
+        upstreamStatus: response.status,
+        upstreamResponse: text.slice(0, 500)
       });
     }
 
-    if (!result.success) {
-      return res.status(502).json(result);
+    if (!response.ok || !result.success) {
+      return res.status(502).json({
+        success: false,
+        error: result.error || 'Apps Script write failed',
+        upstreamStatus: response.status
+      });
     }
 
     return res.status(200).json(result);
