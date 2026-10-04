@@ -271,3 +271,16 @@ main{padding-top:30px}
 .nav .navbtn[data-page="share"]{order:0!important}
 .nav #installAppBtn{order:0!important;margin-top:0!important}
 .nav #saveBtn{order:0!important;margin-top:0!important;margin-left:0!important}
+
+
+/* Sidebar boxed navigation — UI only */
+.nav .navbtn{
+ border:1px solid var(--line)!important;
+ background:#fff!important;
+ border-radius:8px!important;
+ box-shadow:0 1px 3px rgba(16,24,40,.04)!important;
+ margin:1px 0!important;
+}
+.nav .navbtn:hover{background:var(--bg)!important;border-color:rgba(99,91,255,.18)!important}
+.nav .navbtn.active{background:var(--accent2)!important;color:var(--accent)!important;border-color:rgba(99,91,255,.16)!important}
+.nav #installAppBtn,.nav #saveBtn{border-radius:8px!important;margin:1px 0!important}
