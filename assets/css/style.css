@@ -224,3 +224,17 @@ input,select,textarea{border-radius:7px}
 main{padding-top:30px}
 .hero-search{width:100%;max-width:none}
 .hero-search-input{width:100%}
+
+
+/* Wishlist request panel sizing — UI only */
+#need .grid.two{align-items:stretch}
+#need .grid.two>.card{min-height:0}
+#need .grid.two>.card:first-child{padding:18px}
+#need .grid.two>.card:first-child form{gap:10px}
+#need .grid.two>.card:first-child textarea{min-height:92px}
+#need .grid.two>.card:nth-child(2){display:flex;flex-direction:column;overflow:hidden}
+#need .grid.two>.card:nth-child(2) .card-title{flex:0 0 auto}
+#need .need-list{flex:1;min-height:0;overflow-y:auto;padding-right:6px}
+#need .need-list::-webkit-scrollbar{width:7px}
+#need .need-list::-webkit-scrollbar-thumb{background:rgba(99,91,255,.28);border-radius:10px}
+#need .need-list::-webkit-scrollbar-track{background:rgba(16,24,40,.04);border-radius:10px}
