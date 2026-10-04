@@ -294,3 +294,8 @@ main{padding-top:30px}
 .nav-subtabs .nav-subtab:hover{background:var(--bg)!important;color:var(--ink)!important}
 .nav-subtabs .nav-subtab.active{background:var(--accent2)!important;color:var(--accent)!important;border-color:rgba(99,91,255,.16)!important}
 @media(max-width:650px){.nav-subtabs{flex-direction:row;margin:0;padding:0;border-left:0}.nav-subtabs .nav-subtab{width:auto!important}}
+
+
+/* CampusLoop sidebar brand icon — UI only */
+.nav .nav-brand-mini{display:flex;align-items:center;gap:8px}
+.nav .nav-brand-mini:before{content:"";width:18px;height:18px;flex:0 0 18px;border:2px solid #635bff;border-radius:6px;transform:rotate(45deg);box-shadow:3px 3px 0 -1px #06b6d4}
