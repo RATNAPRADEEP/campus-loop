@@ -8,6 +8,29 @@ export default async function handler(req, res) {
   try {
     const { action, sheet, data } = req.body || {};
 
+    if (action === 'uploadResourceFile') {
+      if (!data || !data.fileName || !data.base64) {
+        return res.status(400).json({ success: false, error: 'File name and file data are required' });
+      }
+      if (data.base64.length > 7000000) {
+        return res.status(413).json({ success: false, error: 'File is too large for this upload path. Please use a smaller file.' });
+      }
+      const uploadResponse = await fetch(CLOUD_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'uploadResourceFile', data })
+      });
+      const uploadText = await uploadResponse.text();
+      let uploadResult;
+      try { uploadResult = JSON.parse(uploadText); } catch {
+        return res.status(502).json({ success: false, error: 'Apps Script returned a non-JSON upload response', upstreamResponse: uploadText.slice(0, 500) });
+      }
+      if (!uploadResponse.ok || !uploadResult.success) {
+        return res.status(502).json({ success: false, error: uploadResult.error || 'Drive upload failed', upstreamStatus: uploadResponse.status });
+      }
+      return res.status(200).json(uploadResult);
+    }
+
     if (!['add', 'update'].includes(action) || !sheet || !data) {
       return res.status(400).json({
         success: false,
