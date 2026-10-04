@@ -50,8 +50,8 @@ export default async function handler(req, res) {
       if (!data || !data.fileName || !data.base64) {
         return res.status(400).json({ success: false, error: 'File name and file data are required' });
       }
-      if (data.base64.length > 7000000) {
-        return res.status(413).json({ success: false, error: 'File is too large for this upload path. Please use a smaller file.' });
+      if (data.base64.length > 4200000) {
+        return res.status(413).json({ success: false, error: 'File is too large for this upload path. Please use a file smaller than 3 MB.' });
       }
       const uploadResponse = await fetch(CLOUD_API, {
         method: 'POST',
