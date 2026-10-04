@@ -264,3 +264,10 @@ main{padding-top:30px}
 #need>.card:last-child>#matchResults::-webkit-scrollbar{width:7px}
 #need>.card:last-child>#matchResults::-webkit-scrollbar-thumb{background:rgba(99,91,255,.35);border-radius:10px}
 #need>.card:last-child>#matchResults::-webkit-scrollbar-track{background:rgba(16,24,40,.05);border-radius:10px}
+
+
+/* Sidebar spacing fix — UI only */
+.nav .navbtn[data-page="share"]{margin-left:0!important}
+.nav .navbtn[data-page="share"]{order:0!important}
+.nav #installAppBtn{order:0!important;margin-top:0!important}
+.nav #saveBtn{order:0!important;margin-top:0!important;margin-left:0!important}
