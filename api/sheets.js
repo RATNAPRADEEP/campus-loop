@@ -1,6 +1,44 @@
 const CLOUD_API = 'https://script.google.com/macros/s/AKfycbxvxQ2OlL-YtocTnOfk9VU__l5dfcEx0hbU7ZdKUz2FpZUpZtiFgZ0IJ-WQN0MCVzPDcw/exec';
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const { action, sheet } = req.query || {};
+      if (action !== 'read' || !sheet) {
+        return res.status(400).json({ success: false, error: 'Read action and sheet are required' });
+      }
+
+      const response = await fetch(
+        CLOUD_API + '?action=read&sheet=' + encodeURIComponent(sheet)
+      );
+      const text = await response.text();
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        return res.status(502).json({
+          success: false,
+          error: 'Apps Script returned a non-JSON read response',
+          upstreamStatus: response.status,
+          upstreamResponse: text.slice(0, 500)
+        });
+      }
+
+      if (!response.ok || !result.success) {
+        return res.status(502).json({
+          success: false,
+          error: result.error || 'Cloud read failed',
+          upstreamStatus: response.status
+        });
+      }
+
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
