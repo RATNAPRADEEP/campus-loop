@@ -1,19 +1,12 @@
+const CLOUD_API='https://script.google.com/macros/s/AKfycbyBhy86AN9c3oJX1tJryljtGxUI7MI8q9rSJhTTvSM3cHL1WKumTz-f0aNA8QM6xXes8Q/exec';
 export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
   try{
-    const {action,phone,code,college}=req.body||{};
-    if(action!=='send-recovery'||!phone||!code)return res.status(400).json({success:false,error:'Invalid recovery request'});
-    const token=process.env.WHATSAPP_ACCESS_TOKEN;
-    const phoneNumberId=process.env.WHATSAPP_PHONE_NUMBER_ID;
-    if(!token||!phoneNumberId)return res.status(503).json({success:false,error:'WhatsApp recovery is not configured yet.'});
-    const to=String(phone).replace(/[^0-9]/g,'');
-    const response=await fetch('https://graph.facebook.com/v23.0/'+phoneNumberId+'/messages',{
-      method:'POST',
-      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-      body:JSON.stringify({messaging_product:'whatsapp',to,type:'text',text:{body:'CampusLoop password recovery for '+String(college||'your college')+'. Your one-time recovery code is '+String(code)+'. It expires in 10 minutes. Do not share this code.'}})
-    });
-    const data=await response.json();
-    if(!response.ok)return res.status(502).json({success:false,error:data?.error?.message||'WhatsApp delivery failed'});
-    return res.status(200).json({success:true});
-  }catch(e){return res.status(500).json({success:false,error:'Unable to send WhatsApp recovery message.'})}
+    const body=req.body||{};
+    if(!['register','login','reset-password','send-recovery'].includes(body.action))return res.status(400).json({success:false,error:'Invalid auth action'});
+    const upstream=await fetch(CLOUD_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const text=await upstream.text();let result;
+    try{result=JSON.parse(text)}catch{return res.status(502).json({success:false,error:'Apps Script returned a non-JSON auth response'})}
+    return res.status(upstream.ok&&result.success?200:401).json(result);
+  }catch(e){return res.status(500).json({success:false,error:e.message})}
 }
