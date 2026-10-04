@@ -63,5 +63,40 @@ async function syncStudentAccountToCloud(user){try{await cloudAdd('Students',{ '
 function initAuth(){collegeConfig=getCollege();showLogin();$('collegeSetupForm').addEventListener('submit',e=>{e.preventDefault();const c={name:$('setupCollegeName').value.trim(),code:$('setupCollegeCode').value.trim().toUpperCase(),domain:$('setupCollegeDomain').value.trim().toLowerCase(),whatsapp:$('setupCollegeWhatsapp').value.trim(),lockedAt:new Date().toISOString()};if(!c.name||!c.code||!c.whatsapp)return toast('College name, code and WhatsApp number are required.',true);saveCollege(c);showLogin();toast('College details saved and locked 🔒')});$('loginForm').addEventListener('submit',loginAccount);$('forgotPasswordBtn').addEventListener('click',showForgot);$('sendRecoveryBtn').addEventListener('click',recovery);$('resetPasswordBtn').addEventListener('click',resetPassword);$('changeCollegeBtn').addEventListener('click',changeCollege);$('editProfileBtn').addEventListener('click',editProfile);$('logoutBtn').addEventListener('click',logout);$('showSignupBtn').addEventListener('click',showSignup);$('signupForm').addEventListener('submit',createAccount)}
 function gapiLoaded(){} function gisLoaded(){}
 let deferredInstallPrompt=null;
-function setupInstallApp(){const btn=$('installAppBtn');if(!btn)return;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;btn.classList.remove('hidden')});btn.addEventListener('click',async()=>{if(!deferredInstallPrompt){toast('If the install prompt does not appear, use Chrome ⋮ → Cast, save, and share → Install page as app.',true);return}deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;btn.classList.add('hidden')});window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;btn.classList.add('hidden');toast('CampusLoop installed on this device.')})}
+function setupInstallApp(){
+  const btn=$('installAppBtn');
+  if(!btn)return;
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const isStandalone=window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(isStandalone){btn.classList.add('hidden');return}
+  if(isIOS)btn.textContent='Add to Home Screen';
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;btn.classList.remove('hidden')});
+  btn.addEventListener('click',async()=>{
+    if(isIOS){
+      if(navigator.share){
+        try{
+          await navigator.share({title:'CampusLoop',url:window.location.href});
+          return
+        }catch(e){
+          if(e?.name==='AbortError')return
+        }
+      }
+      toast('Tap Share in Safari, then choose “Add to Home Screen”.',true);
+      return
+    }
+    if(!deferredInstallPrompt){
+      toast('Chrome has not offered the install prompt yet. Open Chrome ⋮ → Cast, save, and share → Install page as app.',true);
+      return
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt=null;
+    btn.classList.add('hidden')
+  });
+  window.addEventListener('appinstalled',()=>{
+    deferredInstallPrompt=null;
+    btn.classList.add('hidden');
+    toast('CampusLoop installed on this device.')
+  })
+}
 document.addEventListener('DOMContentLoaded',()=>{setupInstallApp();if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('CampusLoop service worker registration failed:',e));}initAuth();$('saveBtn').addEventListener('click',saveLocal);document.querySelectorAll('.navbtn,[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));$('shareFile')?.addEventListener('change',()=>{const f=$('shareFile').files?.[0];$('shareFileStatus').textContent=f?f.name+' selected ('+(f.size/1024/1024).toFixed(2)+' MB).':'No file selected.';});['exploreSearch','exploreCategory','exploreMode','exploreDepartment','exploreYear','explorePrice','exploreFileType','exploreSort'].forEach(id=>$(id)?.addEventListener('input',renderResources));$('exploreClear')?.addEventListener('click',()=>{['exploreSearch','exploreCategory','exploreMode','exploreDepartment','exploreYear','explorePrice','exploreFileType'].forEach(id=>{if($(id))$(id).value=''});if($('exploreSort'))$('exploreSort').value='newest';renderResources()});$('needForm').addEventListener('submit',addNeed);$('shareForm').addEventListener('submit',addResource);$('profileForm').addEventListener('submit',saveProfile);document.addEventListener('click',e=>{const x=e.target.closest('[data-request]');if(x)requestResource(x.dataset.request);const y=e.target.closest('[data-return]');if(y)markReturned(y.dataset.return);const z=e.target.closest('[data-toggle-resource]');if(z)toggleResource(z.dataset.toggleResource);const m=e.target.closest('[data-find-matches]');if(m)showMatches(m.dataset.findMatches);const o=e.target.closest('[data-offer-resource]');if(o)offerResource(o.dataset.offerNeed,o.dataset.offerResource);const a=e.target.closest('[data-accept-offer]');if(a)acceptOffer(a.dataset.acceptOffer)});$('connectBtn').addEventListener('click',async()=>{const b=$('connectBtn');if(b.disabled)return;b.disabled=true;b.textContent='Syncing…';try{await loadCloud();$('connectionText').textContent=collegeConfig?collegeConfig.name+' · Google Sheets':'Google Sheets · Connected';$('dot').classList.add('on');toast('Google Sheets synced successfully.')}catch(e){toast('Google Sheets sync failed. Please try again.',true)}finally{b.disabled=false;b.textContent='Sync Google Sheets'}});render()});
