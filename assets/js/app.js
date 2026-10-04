@@ -39,28 +39,13 @@ async function saveProfile(e){
   const next={...db.profile,name:$('profileName').value.trim(),campus:$('profileCampus').value.trim(),department:$('profileDept').value.trim(),year:$('profileYear').value,email:$('profileEmail').value.trim(),phone:$('profilePhone').value.trim()};
   if(!next.name||!next.department||!next.year||!next.email||!next.phone)return toast('Please complete your profile details.',true);
   try{
-    const users=await cloudRead('Users');
-    const userRow=users.findIndex(u=>(u['User ID']||u['Student ID']||u.id)===db.profile.id||String(u.Identifier||u.identifier||'').replace(/[\s()-]/g,'')===String(db.profile.identifier||currentUser?.identifier||'').replace(/[\s()-]/g,''));
-    if(userRow<0)throw new Error('Your account record could not be found.');
-    await cloudUpdate('Users',userRow+2,{Name:next.name,Email:next.email,Department:next.department,Year:next.year,Phone:next.phone});
-    const students=await cloudRead('Students');
-    const studentRow=students.findIndex(s=>(s['Student ID']||s.id)===db.profile.id||String(s['Registration Number']||s['Registration No']||s.Identifier||'').trim()===String(db.profile.identifier||currentUser?.identifier||'').trim());
-    if(studentRow>=0){
-      await cloudUpdate('Students',studentRow+2,{Name:next.name,Email:next.email,Department:next.department,Year:next.year,Phone:next.phone,Role:currentUser?.role||'Student',Campus:next.campus});
-    }
-    const profiles=await cloudRead('Profiles');
-    const profileRow=profiles.findIndex(p=>(p['Student ID']||p.id)===db.profile.id);
-    const profileData={'Student ID':db.profile.id,Name:next.name,Email:next.email,Campus:next.campus,Department:next.department,Year:next.year,Phone:next.phone,'Profile Status':'Active','Updated At':today()};
-    if(profileRow>=0)await cloudUpdate('Profiles',profileRow+2,profileData);
-    else await cloudAdd('Profiles',profileData);
+    const j=await cloudAuth('update-profile',{userId:currentUser?.id||db.profile.id,identifier:db.profile.identifier||currentUser?.identifier||'',role:currentUser?.role||'Student',college:collegeConfig||{},campus:next.campus,name:next.name,email:next.email,department:next.department,year:next.year,phone:next.phone});
     db.profile=next;
-    if(currentUser){
-      currentUser={...currentUser,name:next.name,email:next.email,department:next.department,year:next.year,phone:next.phone};
+    if(j.user){
+      currentUser={...currentUser,...j.user};
       localStorage.setItem('campusloop_session',JSON.stringify(currentUser));
     }
-    const localUsers=getUsers(),i=localUsers.findIndex(u=>u.id===currentUser?.id);
-    if(i>=0){localUsers[i]={...localUsers[i],name:next.name,email:next.email,department:next.department,year:next.year,phone:next.phone};localStorage.setItem(AUTH_USERS_KEY,JSON.stringify(localUsers))}
-    render();setProfileEditMode(false);toast('Profile updated and synced to Google Sheets.');
+    render();setProfileEditMode(false);toast('Profile updated and synchronized to Google Sheets.');
   }catch(err){
     toast(err.message||'Could not update your profile.',true);
   }
