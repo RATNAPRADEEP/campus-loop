@@ -1,11 +1,13 @@
-const CACHE_NAME = 'campusloop-shell-v2';
+const CACHE_NAME = 'campusloop-shell-v3';
 const SHELL = [
   '/',
   '/index.html',
   '/assets/css/style.css?v=campusloop-20261004',
   '/assets/js/app.js?v=campusloop-20261004',
   '/manifest.webmanifest',
-  '/assets/icons/icon.svg'
+  '/assets/icons/icon.svg',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
