@@ -8,10 +8,17 @@ export default async function handler(req, res) {
   try {
     const { action, sheet, data } = req.body || {};
 
-    if (action !== 'add' || !sheet || !data) {
+    if (!['add', 'update'].includes(action) || !sheet || !data) {
       return res.status(400).json({
         success: false,
         error: 'Invalid sheet write request'
+      });
+    }
+
+    if (action === 'update' && !req.body.row) {
+      return res.status(400).json({
+        success: false,
+        error: 'Row number is required for update'
       });
     }
 
@@ -21,8 +28,9 @@ export default async function handler(req, res) {
         'Content-Type': 'text/plain;charset=utf-8'
       },
       body: JSON.stringify({
-        action: 'add',
+        action,
         sheet,
+        row: req.body.row,
         data
       })
     });
