@@ -256,3 +256,11 @@ main{padding-top:30px}
 #need .grid.two>.card:nth-child(2) .need-list::-webkit-scrollbar{width:7px}
 #need .grid.two>.card:nth-child(2) .need-list::-webkit-scrollbar-thumb{background:rgba(99,91,255,.35);border-radius:10px}
 #need .grid.two>.card:nth-child(2) .need-list::-webkit-scrollbar-track{background:rgba(16,24,40,.05);border-radius:10px}
+
+
+/* Suggested matches scroll area — UI only */
+#need>.card:last-child{max-height:410px;overflow:hidden}
+#need>.card:last-child>#matchResults{max-height:330px;overflow-y:auto;overflow-x:hidden;padding-right:6px}
+#need>.card:last-child>#matchResults::-webkit-scrollbar{width:7px}
+#need>.card:last-child>#matchResults::-webkit-scrollbar-thumb{background:rgba(99,91,255,.35);border-radius:10px}
+#need>.card:last-child>#matchResults::-webkit-scrollbar-track{background:rgba(16,24,40,.05);border-radius:10px}
