@@ -284,3 +284,13 @@ main{padding-top:30px}
 .nav .navbtn:hover{background:var(--bg)!important;border-color:rgba(99,91,255,.18)!important}
 .nav .navbtn.active{background:var(--accent2)!important;color:var(--accent)!important;border-color:rgba(99,91,255,.16)!important}
 .nav #installAppBtn,.nav #saveBtn{border-radius:8px!important;margin:1px 0!important}
+
+
+/* Dashboard subtabs and restored Contribute label — UI only */
+.nav .navbtn[data-page="share"]{background:linear-gradient(135deg,#635bff,#8b5cf6)!important;color:#fff!important;border-color:transparent!important}
+.nav .navbtn[data-page="share"]:before{content:none!important}
+.nav-subtabs{display:flex;flex-direction:column;gap:3px;margin:0 0 3px 10px;padding-left:10px;border-left:2px solid rgba(99,91,255,.12)}
+.nav-subtabs .nav-subtab{font-size:12px!important;padding:8px 11px!important;background:#fff!important;border:1px solid var(--line)!important;color:var(--muted)!important;box-shadow:0 1px 3px rgba(16,24,40,.03)!important}
+.nav-subtabs .nav-subtab:hover{background:var(--bg)!important;color:var(--ink)!important}
+.nav-subtabs .nav-subtab.active{background:var(--accent2)!important;color:var(--accent)!important;border-color:rgba(99,91,255,.16)!important}
+@media(max-width:650px){.nav-subtabs{flex-direction:row;margin:0;padding:0;border-left:0}.nav-subtabs .nav-subtab{width:auto!important}}
