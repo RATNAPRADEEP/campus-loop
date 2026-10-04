@@ -80,25 +80,3 @@ th{background:rgba(99,91,255,.05)}
  .category,.need-card{background:rgba(15,23,42,.65);border-color:rgba(255,255,255,.08)}
  .nav button{color:#cbd5e1}.nav button.active{color:#a5b4fc}
 }
-
-
-/* Command Center / Bento architecture */
-.nav{align-items:center}
-.nav:before{content:"COMMAND CENTER";font-size:9px;font-weight:900;letter-spacing:.16em;color:#98a2b3;padding:0 10px;white-space:nowrap}
-.nav .navbtn[data-page="share"]{order:20;margin-left:auto;background:linear-gradient(135deg,#635bff,#8b5cf6);color:#fff!important;border:0;box-shadow:0 10px 28px rgba(99,91,255,.28);padding:11px 18px}
-.nav .navbtn[data-page="share"]:before{content:"+ "}
-.nav .save{order:30;margin-left:0}
-.hero{margin-bottom:16px}
-.hero-actions{position:relative;z-index:2}
-.stats{grid-template-columns:repeat(6,minmax(0,1fr));padding:6px;border-radius:24px;background:linear-gradient(135deg,rgba(99,91,255,.07),rgba(6,182,212,.045));border:1px solid rgba(99,91,255,.10)}
-.stats article{min-width:0;border:0;border-radius:17px;background:rgba(255,255,255,.58);box-shadow:none}
-.stats article:first-child,.stats article:nth-child(3){background:linear-gradient(135deg,rgba(99,91,255,.11),rgba(255,255,255,.55))}
-.stats span{font-weight:700}
-.grid.two>.card:first-child{min-height:300px}
-.category{min-height:78px;display:flex;flex-direction:column;justify-content:center}
-.category b:before{content:"◈";display:inline-block;margin-right:7px;color:#635bff;font-size:11px}
-.list p{transition:background .2s ease,padding .2s ease;border-radius:10px}
-.list p:hover{background:rgba(99,91,255,.045);padding-left:9px}
-.highlight-panel{min-height:150px;display:flex;flex-direction:column;justify-content:center}
-@media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.nav:before{display:none}}
-@media(max-width:650px){.nav .navbtn[data-page="share"]{margin-left:0}.stats{grid-template-columns:repeat(2,1fr)}}
