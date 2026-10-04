@@ -3,7 +3,7 @@ export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
   try{
     const body=req.body||{};
-    if(!['register','login','reset-password','send-recovery'].includes(body.action))return res.status(400).json({success:false,error:'Invalid auth action'});
+    if(!['register','login','reset-password','send-recovery','update-profile'].includes(body.action))return res.status(400).json({success:false,error:'Invalid auth action'});
     const upstream=await fetch(CLOUD_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
     const text=await upstream.text();let result;
     try{result=JSON.parse(text)}catch{return res.status(502).json({success:false,error:'Apps Script returned a non-JSON auth response'})}
