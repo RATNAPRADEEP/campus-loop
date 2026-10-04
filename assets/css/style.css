@@ -213,3 +213,14 @@ input,select,textarea{border-radius:7px}
  .stats article:nth-child(2n){border-right:0}
  .stats article:nth-last-child(-n+2){border-bottom:0}
 }
+
+
+/* Reference markup cleanup — UI only */
+.topbar{display:none}
+.nav{top:0}
+.nav .nav-brand-mini .brand-mark{display:none}
+.nav .nav-brand-mini{padding-left:13px}
+.nav .nav-brand-mini strong{font-size:18px}
+main{padding-top:30px}
+.hero-search{width:100%;max-width:none}
+.hero-search-input{width:100%}
