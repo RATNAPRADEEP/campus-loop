@@ -1,4 +1,4 @@
-const CLOUD_API = 'https://script.google.com/macros/s/AKfycbxvxQ2OlL-YtocTnOfk9VU__l5dfcEx0hbU7ZdKUz2FpZUpZtiFgZ0IJ-WQN0MCVzPDcw/exec';
+const CLOUD_API = 'https://script.google.com/macros/s/AKfycbyBhy86AN9c3oJX1tJryljtGxUI7MI8q9rSJhTTvSM3cHL1WKumTz-f0aNA8QM6xXes8Q/exec';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
