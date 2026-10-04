@@ -1,9 +1,9 @@
-const CACHE_NAME = 'campusloop-shell-v1';
+const CACHE_NAME = 'campusloop-shell-v2';
 const SHELL = [
   '/',
   '/index.html',
-  '/assets/css/style.css',
-  '/assets/js/app.js',
+  '/assets/css/style.css?v=campusloop-20261004',
+  '/assets/js/app.js?v=campusloop-20261004',
   '/manifest.webmanifest',
   '/assets/icons/icon.svg'
 ];
