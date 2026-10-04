@@ -303,3 +303,9 @@ main{padding-top:30px}
 
 /* Sidebar brand spacing — UI only */
 .nav .nav-brand-mini{margin-bottom:8px}
+
+
+/* Contribute neutral sidebar styling — UI only */
+.nav .navbtn[data-page="share"]{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line)!important;box-shadow:0 1px 3px rgba(16,24,40,.04)!important}
+.nav .navbtn[data-page="share"]:hover{background:var(--bg)!important;color:var(--ink)!important}
+.nav .navbtn[data-page="share"].active{background:var(--accent2)!important;color:var(--accent)!important;border-color:rgba(99,91,255,.16)!important}
