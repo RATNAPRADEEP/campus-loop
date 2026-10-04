@@ -238,3 +238,21 @@ main{padding-top:30px}
 #need .need-list::-webkit-scrollbar{width:7px}
 #need .need-list::-webkit-scrollbar-thumb{background:rgba(99,91,255,.28);border-radius:10px}
 #need .need-list::-webkit-scrollbar-track{background:rgba(16,24,40,.04);border-radius:10px}
+
+
+/* Wishlist exact two-panel sizing — UI only */
+#need .grid.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+#need .grid.two>.card:first-child,#need .grid.two>.card:nth-child(2){height:410px;min-height:0;max-height:410px;overflow:hidden}
+#need .grid.two>.card:first-child{padding:18px}
+#need .grid.two>.card:first-child h3{margin-top:0;margin-bottom:12px}
+#need .grid.two>.card:first-child form{gap:8px}
+#need .grid.two>.card:first-child label{gap:5px}
+#need .grid.two>.card:first-child input,#need .grid.two>.card:first-child select{padding:9px 10px}
+#need .grid.two>.card:first-child textarea{height:72px;min-height:72px;resize:none}
+#need .grid.two>.card:first-child .form-grid{gap:10px}
+#need .grid.two>.card:nth-child(2){display:flex;flex-direction:column}
+#need .grid.two>.card:nth-child(2) .card-title{flex:0 0 auto}
+#need .grid.two>.card:nth-child(2) .need-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:5px}
+#need .grid.two>.card:nth-child(2) .need-list::-webkit-scrollbar{width:7px}
+#need .grid.two>.card:nth-child(2) .need-list::-webkit-scrollbar-thumb{background:rgba(99,91,255,.35);border-radius:10px}
+#need .grid.two>.card:nth-child(2) .need-list::-webkit-scrollbar-track{background:rgba(16,24,40,.05);border-radius:10px}
