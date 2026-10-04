@@ -7,41 +7,22 @@ export default async function handler(req, res) {
       if (action !== 'read' || !sheet) {
         return res.status(400).json({ success: false, error: 'Read action and sheet are required' });
       }
-
-      const response = await fetch(
-        CLOUD_API + '?action=read&sheet=' + encodeURIComponent(sheet)
-      );
+      const response = await fetch(CLOUD_API + '?action=read&sheet=' + encodeURIComponent(sheet));
       const text = await response.text();
-
       let result;
-      try {
-        result = JSON.parse(text);
-      } catch {
-        return res.status(502).json({
-          success: false,
-          error: 'Apps Script returned a non-JSON read response',
-          upstreamStatus: response.status,
-          upstreamResponse: text.slice(0, 500)
-        });
+      try { result = JSON.parse(text); } catch {
+        return res.status(502).json({ success: false, error: 'Apps Script returned a non-JSON read response', upstreamStatus: response.status, upstreamResponse: text.slice(0, 500) });
       }
-
       if (!response.ok || !result.success) {
-        return res.status(502).json({
-          success: false,
-          error: result.error || 'Cloud read failed',
-          upstreamStatus: response.status
-        });
+        return res.status(502).json({ success: false, error: result.error || 'Cloud read failed', upstreamStatus: response.status });
       }
-
       return res.status(200).json(result);
     } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
     }
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   try {
     const { action, sheet, data } = req.body || {};
@@ -50,8 +31,8 @@ export default async function handler(req, res) {
       if (!data || !data.fileName || !data.base64) {
         return res.status(400).json({ success: false, error: 'File name and file data are required' });
       }
-      if (data.base64.length > 4200000) {
-        return res.status(413).json({ success: false, error: 'File is too large for this upload path. Please use a file smaller than 3 MB.' });
+      if (data.base64.length > 14000000) {
+        return res.status(413).json({ success: false, error: 'File is too large for this upload path. Please use a file smaller than 10 MB.' });
       }
       const uploadResponse = await fetch(CLOUD_API, {
         method: 'POST',
@@ -70,59 +51,27 @@ export default async function handler(req, res) {
     }
 
     if (!['add', 'update'].includes(action) || !sheet || !data) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid sheet write request'
-      });
+      return res.status(400).json({ success: false, error: 'Invalid sheet write request' });
     }
-
     if (action === 'update' && !req.body.row) {
-      return res.status(400).json({
-        success: false,
-        error: 'Row number is required for update'
-      });
+      return res.status(400).json({ success: false, error: 'Row number is required for update' });
     }
 
     const response = await fetch(CLOUD_API, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify({
-        action,
-        sheet,
-        row: req.body.row,
-        data
-      })
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, sheet, row: req.body.row, data })
     });
-
     const text = await response.text();
-
     let result;
-    try {
-      result = JSON.parse(text);
-    } catch {
-      return res.status(502).json({
-        success: false,
-        error: 'Apps Script returned a non-JSON response',
-        upstreamStatus: response.status,
-        upstreamResponse: text.slice(0, 500)
-      });
+    try { result = JSON.parse(text); } catch {
+      return res.status(502).json({ success: false, error: 'Apps Script returned a non-JSON response', upstreamStatus: response.status, upstreamResponse: text.slice(0, 500) });
     }
-
     if (!response.ok || !result.success) {
-      return res.status(502).json({
-        success: false,
-        error: result.error || 'Apps Script write failed',
-        upstreamStatus: response.status
-      });
+      return res.status(502).json({ success: false, error: result.error || 'Apps Script write failed', upstreamStatus: response.status });
     }
-
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return res.status(500).json({ success: false, error: error.message });
   }
 }
