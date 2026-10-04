@@ -1,0 +1,14 @@
+{
+  "name": "CampusLoop — Student Sharing Platform",
+  "short_name": "CampusLoop",
+  "description": "A student-to-student campus sharing platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5ef",
+  "theme_color": "#111111",
+  "orientation": "portrait-primary",
+  "icons": [
+    {"src": "/assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
