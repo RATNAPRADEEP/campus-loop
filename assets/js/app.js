@@ -36,7 +36,25 @@ async function acceptOffer(id){const t=db.transactions.find(x=>x.id===id),n=t&&d
 async function markReturned(id){const b=db.borrowings.find(x=>x.id===id);if(!b)return;b.status='Returned';b.returnedOn=today();const t={id:uid(),type:'Return',resourceId:b.resourceId,resource:b.resource,fromId:b.borrowerId,fromName:b.borrower,toId:b.lenderId,toName:b.lender,status:'Completed',date:today()};try{await cloudAdd('Transactions',{'Transaction ID':t.id,Type:t.type,'Resource ID':t.resourceId,Resource:t.resource,'From ID':t.fromId,'From Name':t.fromName,'To ID':t.toId,'To Name':t.toName,Status:t.status,Date:t.date,Notes:''});db.transactions.push(t);render();toast('Item marked returned and synced.')}catch(err){toast('Could not sync the return.',true)}}
 async function saveProfile(e){e.preventDefault();db.profile={...db.profile,name:$('profileName').value.trim(),campus:$('profileCampus').value.trim(),department:$('profileDept').value.trim(),year:$('profileYear').value,email:$('profileEmail').value.trim()};if(currentUser){const users=getUsers(),i=users.findIndex(u=>u.id===currentUser.id&&u.collegeCode===collegeConfig.code);if(i>=0){users[i]={...users[i],name:db.profile.name,email:db.profile.email,department:db.profile.department,year:db.profile.year};localStorage.setItem(AUTH_USERS_KEY,JSON.stringify(users));currentUser=users[i]}}let s=db.students.find(x=>x.id===db.profile.id);if(!s){s={id:db.profile.id,name:'',department:'',year:''};db.students.push(s)}Object.assign(s,{name:db.profile.name,department:db.profile.department,year:db.profile.year});try{await cloudAdd('Profiles',{'Student ID':db.profile.id,Name:db.profile.name,Email:db.profile.email,Campus:db.profile.campus,Department:db.profile.department,Year:db.profile.year,'Profile Status':'Active','Updated At':today()});await cloudAdd('Students',{'Student ID':db.profile.id,Name:db.profile.name,Email:db.profile.email,Campus:db.profile.campus,Department:db.profile.department,Year:db.profile.year,Phone:'',Verified:'No',Status:'Active','Created At':today()});render();setProfileEditMode(false);toast('Profile saved and synced.')}catch(err){render();setProfileEditMode(false);toast('Profile saved locally; Google Sheets sync failed.',true)}}
 function workbook(){const wb=XLSX.utils.book_new();const put=(n,a)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(a),n);put('Resources',db.resources);put('Students',db.students);put('Needs',db.needs);put('Transactions',db.transactions);put('Borrowings',db.borrowings);put('Profiles',[db.profile]);return XLSX.write(wb,{bookType:'xlsx',type:'array'})}
-function saveLocal(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([workbook()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='CampusLoop_Data.xlsx';a.click();toast('CampusLoop workbook downloaded.')}
+async function saveLocal(){
+  const identifier=prompt('Staff login required. Enter Staff registration number / phone number:');
+  if(!identifier)return;
+  const password=prompt('Enter Staff password:');
+  if(!password)return;
+  try{
+    const j=await cloudAuth('login',{college:collegeConfig||{},role:'Staff',identifier:identifier.trim(),password});
+    if(!j.user||j.user.role!=='Staff')throw new Error('Staff workbook access denied.');
+    const a=document.createElement('a');
+    const url=URL.createObjectURL(new Blob([workbook()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.href=url;
+    a.download='CampusLoop_Data.xlsx';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Staff workbook downloaded.');
+  }catch(error){
+    toast(error.message||'Staff workbook access denied.',true);
+  }
+}
 const CLOUD_API='https://script.google.com/macros/s/AKfycbyBhy86AN9c3oJX1tJryljtGxUI7MI8q9rSJhTTvSM3cHL1WKumTz-f0aNA8QM6xXes8Q/exec';
 async function cloudRead(sheet){const r=await fetch('/api/sheets?action=read&sheet='+encodeURIComponent(sheet));const j=await r.json();if(!r.ok||!j.success)throw new Error(j.error||'Cloud read failed for '+sheet);return j.data||[]}
 async function cloudAdd(sheet,data){const r=await fetch('/api/sheets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',sheet,data})});const j=await r.json();if(!r.ok||!j.success)throw new Error(j.error||'Cloud write failed');return j}
