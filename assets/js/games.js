@@ -249,6 +249,26 @@ function renderMultiplayerBattle(room,roomCode,playerId){
  document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.onclick=()=>setMove(b.dataset.rps));
  pollBattleMove(roomCode,playerId);
 }
+async function resolveRpsRound(room,roomCode,playerId){
+ const p1=String(room.Player1Move||'').toLowerCase(),p2=String(room.Player2Move||'').toLowerCase();
+ if(!p1||!p2)return;
+ const wins={rock:'scissors',paper:'rock',scissors:'paper'};
+ const result=p1===p2?'DRAW':wins[p1]===p2?'PLAYER1':'PLAYER2';
+ const p1Score=Number(room.Player1Score||0)+(result==='PLAYER1'?1:0);
+ const p2Score=Number(room.Player2Score||0)+(result==='PLAYER2'?1:0);
+ const winner=result==='DRAW'?'DRAW':result==='PLAYER1'?String(room.Player1Name||room.Player1Id||'Player 1'):String(room.Player2Name||room.Player2Id||'Player 2');
+ const rows=await cloudRead('BattleRooms');
+ const index=rows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());
+ if(index<0)return;
+ const latest=rows[index];
+ if(String(latest.Winner||'').trim())return;
+ await cloudUpdate('BattleRooms',index+2,{Round:1,Player1Score:p1Score,Player2Score:p2Score,Winner:winner,UpdatedAt:new Date().toISOString()});
+ const resultBox=$('rpsStatus');
+ if(resultBox)resultBox.textContent=result==='DRAW'?'Round 1: Draw 🤝':result==='PLAYER1'?(String(room.Player1Id||'')===String(playerId)?'Round 1: You win! 🎉':'Round 1: Opponent wins.'):String(room.Player2Id||'')===String(playerId)?'Round 1: You win! 🎉':'Round 1: Opponent wins.';
+ const opponentStatus=$('opponentMoveStatus');
+ if(opponentStatus)opponentStatus.textContent='Round 1 complete ✓ '+p1+' vs '+p2+' · Score '+p1Score+'–'+p2Score;
+ document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=true);
+}
 async function pollBattleMove(roomCode,playerId){
  if(window.__campusBattleMovePoll)clearInterval(window.__campusBattleMovePoll);
  const check=async()=>{
@@ -257,6 +277,7 @@ async function pollBattleMove(roomCode,playerId){
    const isP1=String(room.Player1Id||'')===String(playerId);const mine=isP1?String(room.Player1Move||''):String(room.Player2Move||'');const opponent=isP1?String(room.Player2Move||''):String(room.Player1Move||'');const status=$('opponentMoveStatus');if(!status)return;
    status.textContent=opponent?'Opponent has locked a move ✓':'Waiting for opponent to choose a move…';
    if(mine){const r=$('rpsStatus');if(r)r.textContent='Move locked ✓ '+(opponent?'Both moves are ready.':'Waiting for opponent…');}
+   if(mine&&opponent&&!String(room.Winner||'').trim())await resolveRpsRound(room,roomCode,playerId);
   }catch(e){console.warn('Battle move polling failed',e);}
  };
  await check();window.__campusBattleMovePoll=setInterval(check,3000);
