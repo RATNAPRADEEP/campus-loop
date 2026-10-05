@@ -253,7 +253,7 @@ function renderMultiplayerBattle(room,roomCode,playerId,expectedRound){
  document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.onclick=()=>setMove(b.dataset.rps));
  pollBattleMove(roomCode,playerId,roundNumber);
 }
-async function resolveRpsRound(room,roomCode,playerId){
+async function resolveRpsRound(room,roomCode,playerId,roundNumber){
  const p1=String(room.Player1Move||'').toLowerCase(),p2=String(room.Player2Move||'').toLowerCase();
  if(!p1||!p2)return;
  const wins={rock:'scissors',paper:'rock',scissors:'paper'};
@@ -268,9 +268,9 @@ async function resolveRpsRound(room,roomCode,playerId){
  if(String(latest.Winner||'').trim())return;
  await cloudUpdate('BattleRooms',index+2,{Round:roundNumber||1,Player1Score:p1Score,Player2Score:p2Score,Winner:winner,UpdatedAt:new Date().toISOString()});
  const resultBox=$('rpsStatus');
- if(resultBox)resultBox.textContent=result==='DRAW'?'Round 1: Draw 🤝':result==='PLAYER1'?(String(room.Player1Id||'')===String(playerId)?'Round 1: You win! 🎉':'Round 1: Opponent wins.'):String(room.Player2Id||'')===String(playerId)?'Round 1: You win! 🎉':'Round 1: Opponent wins.';
+ if(resultBox)resultBox.textContent=result==='DRAW'?'Round '+(Number(roundNumber)||1)+': Draw 🤝':result==='PLAYER1'?(String(room.Player1Id||'')===String(playerId)?'Round '+(Number(roundNumber)||1)+': You win! 🎉':'Round '+(Number(roundNumber)||1)+': Opponent wins.'):String(room.Player2Id||'')===String(playerId)?'Round '+(Number(roundNumber)||1)+': You win! 🎉':'Round '+(Number(roundNumber)||1)+': Opponent wins.';
  const opponentStatus=$('opponentMoveStatus');
- if(opponentStatus)opponentStatus.textContent='Round 1 complete ✓ '+p1+' vs '+p2+' · Score '+p1Score+'–'+p2Score;
+ if(opponentStatus)opponentStatus.textContent='Round '+(Number(roundNumber)||1)+' complete ✓ '+p1+' vs '+p2+' · Score '+p1Score+'–'+p2Score;
  document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=true);
 }
 async function pollBattleMove(roomCode,playerId,expectedRound){
@@ -286,7 +286,7 @@ async function pollBattleMove(roomCode,playerId,expectedRound){
     const winnerIsDraw=winner.toUpperCase()==='DRAW';
     const iWon=!winnerIsDraw && winner===String(playerId);
     const result=$('rpsStatus');
-    if(result)result.textContent=winnerIsDraw?'Round 1: Draw 🤝':iWon?'Round 1: You win! 🎉':'Round 1: Opponent wins.';
+    if(result)result.textContent=winnerIsDraw?'Round '+(Number(roundNumber)||1)+': Draw 🤝':iWon?'Round '+(Number(roundNumber)||1)+': You win! 🎉':'Round '+(Number(roundNumber)||1)+': Opponent wins.';
     status.innerHTML='Round 1 complete ✓ '+String(room.Player1Move||'')+' vs '+String(room.Player2Move||'')+' · Score '+p1Score+'–'+p2Score+'<div style="margin-top:14px"><button class="btn primary" id="playAgainRpsBtn" type="button">🔄 Play again</button></div>';
     document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=true);
     const playAgainBtn=$('playAgainRpsBtn');
