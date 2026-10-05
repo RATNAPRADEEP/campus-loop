@@ -131,8 +131,11 @@ async function joinMultiplayerBattle(roomCode){
  const index=rows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===code);
  if(index<0)throw new Error('Battle room not found. Check the room code.');
  const room=rows[index];
- if(String(room.Status||'').toUpperCase()!=='WAITING')throw new Error('This battle room is not waiting for another player.');
  if(String(room.Player1Id||'')===playerId)throw new Error('You cannot join your own battle room.');
+ if(String(room.Player2Id||'')===playerId){
+  return {roomCode:code,playerId,playerName};
+ }
+ if(String(room.Status||'').toUpperCase()!=='WAITING')throw new Error('This battle room is not waiting for another player.');
  const now=new Date().toISOString();
  await cloudUpdate('BattleRooms',index+2,{'Player2Id':playerId,'Player2Name':playerName,'Player2Ready':false,'Status':'READY','UpdatedAt':now});
  return {roomCode:code,playerId,playerName};
