@@ -82,6 +82,7 @@ function playQuiz(game){
  const finish=()=>{
   $('gamePlayer').innerHTML='<div class="game-result"><div style="font-size:34px">🏆</div><div>Game complete</div><strong>'+score+' / '+qs.length+'</strong><p class="resource-meta">'+(score===qs.length?'Perfect score!':score>=Math.ceil(qs.length*.6)?'Great job!':'Good attempt — try again and beat your score.')+'</p><div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn primary" id="playAgainBtn" type="button">Play again</button><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div></div>';
   $('playAgainBtn').onclick=()=>{index=0;score=0;draw()};
+  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
   saveGameScore(game,score,qs.length);
  };
  draw();
