@@ -122,11 +122,19 @@ function playMould(game){
  };
  draw();
 }
+async function createMultiplayerBattle(game){
+ const playerId=String(window.db?.profile?.id||window.db?.profile?.['Student ID']||'player-'+Date.now());
+ const playerName=String(window.db?.profile?.name||window.db?.profile?.Name||'CampusLoop Player');
+ const roomCode='CL-'+Math.random().toString(36).slice(2,7).toUpperCase();
+ const now=new Date().toISOString();
+ await cloudAdd('BattleRooms',{'RoomCode':roomCode,'Player1Id':playerId,'Player1Name':playerName,'Player2Id':'','Player2Name':'','Status':'WAITING','CreatedAt':now,'UpdatedAt':now});
+ return {roomCode,playerId,playerName};
+}
 function showMultiplayerLobby(game,backToMould){
  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Multiplayer Battle · Lobby</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="multiplayer-lobby"><div style="font-size:42px">⚔️</div><h3>Campus Mould Battle</h3><p class="resource-meta">Play a hidden-choice battle with another CampusLoop player.</p><div class="multiplayer-actions"><button class="btn primary" id="createBattleBtn" type="button">Create Battle</button><button class="btn" id="joinBattleBtn" type="button">Join Battle</button></div><div id="multiplayerLobbyStatus" class="multiplayer-room"><b>Lobby ready</b><div class="multiplayer-note">Online matchmaking will be connected in the next step.</div></div><button class="btn" id="backToMouldBtn" type="button" style="margin-top:14px">← Back to colouring</button></div></div>';
  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
  $('backToMouldBtn').onclick=()=>backToMould();
- $('createBattleBtn').onclick=()=>{const code='CL-'+Math.random().toString(36).slice(2,7).toUpperCase();$('multiplayerLobbyStatus').innerHTML='<b>Battle room created</b><div class="multiplayer-room-code">'+code+'</div><div class="multiplayer-note">Share this room code with your opponent. Online synchronization comes next.</div>';};
+ $('createBattleBtn').onclick=async()=>{const b=$('createBattleBtn');b.disabled=true;b.textContent='Creating…';try{const battle=await createMultiplayerBattle(game);$('multiplayerLobbyStatus').innerHTML='<b>Battle room created</b><div class="multiplayer-room-code">'+gameEsc(battle.roomCode)+'</div><div class="multiplayer-note">Share this room code with your opponent. The room is now saved to Google Sheets.</div>';}catch(e){console.error('Battle room creation failed',e);$('multiplayerLobbyStatus').innerHTML='<b>Could not create battle</b><div class="multiplayer-note">'+gameEsc(e.message||'Google Sheets sync failed.')+'</div>';}finally{b.disabled=false;b.textContent='Create Battle';}};
  $('joinBattleBtn').onclick=()=>{const code=prompt('Enter the Battle Room Code:');if(!code)return;$('multiplayerLobbyStatus').innerHTML='<b>Room code entered</b><div class="multiplayer-room-code">'+gameEsc(code.trim().toUpperCase())+'</div><div class="multiplayer-note">Room joining will be connected in the next step.</div>';};
 }
 async function saveGameScore(game,score,total){try{await cloudAdd('GamesScores',{'Score ID':uid(),'Game ID':game.id,'Game Title':game.title,'Player ID':db.profile.id,'Player Name':db.profile.name||'Student',Score:score,Total:total,'Played At':today()});}catch(e){console.warn('Game score could not sync to Google Drive',e)}}
