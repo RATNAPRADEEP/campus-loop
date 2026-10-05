@@ -68,7 +68,7 @@ function playQuiz(game){
  let index=0,score=0,locked=false;
  const draw=()=>{
   const q=qs[index];
-  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Playing inside CampusLoop · '+(index+1)+' of '+qs.length+'</div></div><button class="btn" id="closeGameBtn" type="button">Close</button></div><div class="game-player-body"><div class="quiz-progress">Question '+(index+1)+' / '+qs.length+'</div><div class="quiz-question">'+gameEsc(q.q)+'</div><div class="quiz-options">'+q.options.map((o,i)=>'<button class="quiz-option" data-answer="'+i+'" type="button">'+gameEsc(o)+'</button>').join('')+'</div></div>';
+  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Playing inside CampusLoop · '+(index+1)+' of '+qs.length+'</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="quiz-progress">Question '+(index+1)+' / '+qs.length+'</div><div class="quiz-question">'+gameEsc(q.q)+'</div><div class="quiz-options">'+q.options.map((o,i)=>'<button class="quiz-option" data-answer="'+i+'" type="button">'+gameEsc(o)+'</button>').join('')+'</div></div>';
   $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
   document.querySelectorAll('#gamePlayer [data-answer]').forEach(btn=>btn.onclick=()=>{
    if(locked)return;locked=true;
@@ -80,7 +80,7 @@ function playQuiz(game){
   });
  };
  const finish=()=>{
-  $('gamePlayer').innerHTML='<div class="game-result"><div style="font-size:34px">🏆</div><div>Game complete</div><strong>'+score+' / '+qs.length+'</strong><p class="resource-meta">'+(score===qs.length?'Perfect score!':score>=Math.ceil(qs.length*.6)?'Great job!':'Good attempt — try again and beat your score.')+'</p><button class="btn primary" id="playAgainBtn" type="button">Play again</button></div>';
+  $('gamePlayer').innerHTML='<div class="game-result"><div style="font-size:34px">🏆</div><div>Game complete</div><strong>'+score+' / '+qs.length+'</strong><p class="resource-meta">'+(score===qs.length?'Perfect score!':score>=Math.ceil(qs.length*.6)?'Great job!':'Good attempt — try again and beat your score.')+'</p><div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn primary" id="playAgainBtn" type="button">Play again</button><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div></div>';
   $('playAgainBtn').onclick=()=>{index=0;score=0;draw()};
   saveGameScore(game,score,qs.length);
  };
