@@ -247,7 +247,7 @@ function renderMultiplayerBattle(room,roomCode,playerId,expectedRound){
  const setMove=async(move)=>{
   document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>{b.disabled=true;b.classList.toggle('selected',b.dataset.rps===move)});
   $('rpsStatus').textContent='Move locked ✓ Waiting for opponent…';
-  try{const rows=await cloudRead('BattleRooms');const index=rows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());if(index<0)throw new Error('Battle room not found.');await cloudUpdate('BattleRooms',index+2,{[field]:move,UpdatedAt:new Date().toISOString()});pollBattleMove(roomCode,playerId);}
+  try{const rows=await cloudRead('BattleRooms');const index=rows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());if(index<0)throw new Error('Battle room not found.');await cloudUpdate('BattleRooms',index+2,{[field]:move,UpdatedAt:new Date().toISOString()});pollBattleMove(roomCode,playerId,roundNumber);}
   catch(e){document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=false);$('rpsStatus').textContent=e.message||'Could not send move.';}
  };
  document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.onclick=()=>setMove(b.dataset.rps));
