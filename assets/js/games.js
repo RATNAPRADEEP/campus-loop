@@ -138,10 +138,21 @@ async function saveGameScore(game,score,total){
 }
 async function initGames(){
  gameStyles();
- const games=await loadGamesFromDrive();
- window.campusLoopGames=games;
- renderGames(games);
- $('gamesRefreshBtn')?.addEventListener('click',async()=>{const b=$('gamesRefreshBtn');b.disabled=true;b.textContent='Syncing…';const fresh=await loadGamesFromDrive();window.campusLoopGames=fresh;renderGames(fresh);b.disabled=false;b.textContent='Sync Games';toast('Games catalog refreshed from Google Drive.');});
+ window.campusLoopGames=starterGames.slice();
+ renderGames(window.campusLoopGames);
+ loadGamesFromDrive().then(fresh=>{
+  window.campusLoopGames=fresh;
+  renderGames(fresh);
+ }).catch(()=>{});
+ $('gamesRefreshBtn')?.addEventListener('click',async()=>{
+  const b=$('gamesRefreshBtn');b.disabled=true;b.textContent='Syncing…';
+  try{
+   const fresh=await loadGamesFromDrive();
+   window.campusLoopGames=fresh;renderGames(fresh);
+   toast('Games catalog refreshed from Google Drive.');
+  }catch(e){toast('Could not sync Games from Google Drive. Built-in games are still available.',true)}
+  finally{b.disabled=false;b.textContent='Sync Games'}
+ });
  document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else if(game.type==='exquisite')playExquisite(game);else toast('This game type is not enabled yet.',true)});
 }
 window.initCampusGames=initGames;
