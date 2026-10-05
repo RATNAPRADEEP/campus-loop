@@ -256,7 +256,7 @@ async function resolveRpsRound(room,roomCode,playerId){
  const result=p1===p2?'DRAW':wins[p1]===p2?'PLAYER1':'PLAYER2';
  const p1Score=Number(room.Player1Score||0)+(result==='PLAYER1'?1:0);
  const p2Score=Number(room.Player2Score||0)+(result==='PLAYER2'?1:0);
- const winner=result==='DRAW'?'DRAW':result==='PLAYER1'?String(room.Player1Name||room.Player1Id||'Player 1'):String(room.Player2Name||room.Player2Id||'Player 2');
+ const winner=result==='DRAW'?'DRAW':result==='PLAYER1'?String(room.Player1Id||'PLAYER1'):String(room.Player2Id||'PLAYER2');
  const rows=await cloudRead('BattleRooms');
  const index=rows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());
  if(index<0)return;
@@ -279,7 +279,7 @@ async function pollBattleMove(roomCode,playerId){
    if(winner){
     const p1Score=Number(room.Player1Score||0),p2Score=Number(room.Player2Score||0);
     const winnerIsDraw=winner.toUpperCase()==='DRAW';
-    const iWon=!winnerIsDraw && (String(room.Player1Id||'')===String(playerId)?winner===String(room.Player1Name||room.Player1Id||'Player 1'):winner===String(room.Player2Name||room.Player2Id||'Player 2'));
+    const iWon=!winnerIsDraw && winner===String(playerId);
     const result=$('rpsStatus');
     if(result)result.textContent=winnerIsDraw?'Round 1: Draw 🤝':iWon?'Round 1: You win! 🎉':'Round 1: Opponent wins.';
     status.innerHTML='Round 1 complete ✓ '+String(room.Player1Move||'')+' vs '+String(room.Player2Move||'')+' · Score '+p1Score+'–'+p2Score+'<div style="margin-top:14px"><button class="btn primary" id="playAgainRpsBtn" type="button">🔄 Play again</button></div>';
