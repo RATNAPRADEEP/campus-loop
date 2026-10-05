@@ -286,8 +286,9 @@ async function pollBattleMove(roomCode,playerId,expectedRound){
     const winnerIsDraw=winner.toUpperCase()==='DRAW';
     const iWon=!winnerIsDraw && winner===String(playerId);
     const result=$('rpsStatus');
-    if(result)result.textContent=winnerIsDraw?'Round '+(Number(roundNumber)||1)+': Draw 🤝':iWon?'Round '+(Number(roundNumber)||1)+': You win! 🎉':'Round '+(Number(roundNumber)||1)+': Opponent wins.';
-    status.innerHTML='Round 1 complete ✓ '+String(room.Player1Move||'')+' vs '+String(room.Player2Move||'')+' · Score '+p1Score+'–'+p2Score+'<div style="margin-top:14px"><button class="btn primary" id="playAgainRpsBtn" type="button">🔄 Play again</button></div>';
+    const resolvedRound=Number(expectedRound||currentRound||1);
+    if(result)result.textContent=winnerIsDraw?'Round '+resolvedRound+': Draw 🤝':iWon?'Round '+resolvedRound+': You win! 🎉':'Round '+resolvedRound+': Opponent wins.';
+    status.innerHTML='Round '+resolvedRound+' complete ✓ '+String(room.Player1Move||'')+' vs '+String(room.Player2Move||'')+' · Score '+p1Score+'–'+p2Score+'<div style="margin-top:14px"><button class="btn primary" id="playAgainRpsBtn" type="button">🔄 Play again</button></div>';
     document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=true);
     const playAgainBtn=$('playAgainRpsBtn');
     if(playAgainBtn)playAgainBtn.onclick=async()=>{
