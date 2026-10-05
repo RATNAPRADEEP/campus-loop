@@ -101,3 +101,4 @@ async function initGames(){
 }
 window.initCampusGames=initGames;
 })();
+document.addEventListener('DOMContentLoaded',()=>{if(window.initCampusGames)window.initCampusGames()});
