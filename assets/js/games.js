@@ -106,35 +106,70 @@ function playQuiz(game){
  draw();
 }
 function playMould(game){
- const moulds=Array.isArray(game.config?.moulds)&&game.config.moulds.length?game.config.moulds:['Campus Hero'];
+ const moulds=Array.isArray(game.config?.moulds)&&game.config.moulds.length?game.config.moulds:['Robot','Campus Hero','Alien'];
  const colors=['#e8edf2','#8ecae6','#90be6d','#f9c74f','#f9844a','#f28482','#b8a1ff','#222831'];
- let mouldIndex=0,selectedColor=colors[1];
- const parts=[
-  {id:'head',label:'Head',shape:'circle',cx:150,cy:78,r:46},
-  {id:'body',label:'Body',shape:'path',d:'M105 132 Q150 112 195 132 L210 260 Q150 282 90 260 Z'},
-  {id:'leftArm',label:'Left arm',shape:'path',d:'M105 145 L72 160 L46 238 Q43 250 55 255 Q66 258 71 247 L120 190 Z'},
-  {id:'rightArm',label:'Right arm',shape:'path',d:'M195 145 L228 160 L254 238 Q257 250 245 255 Q234 258 229 247 L180 190 Z'},
-  {id:'leftLeg',label:'Left leg',shape:'path',d:'M94 252 L142 258 L137 382 Q135 394 121 394 L88 394 Q78 390 82 379 Z'},
-  {id:'rightLeg',label:'Right leg',shape:'path',d:'M158 258 L206 252 L218 379 Q222 390 212 394 L179 394 Q165 394 163 382 Z'},
-  {id:'earLeft',label:'Left ear',shape:'path',d:'M108 55 L76 35 L88 76 Z'},
-  {id:'earRight',label:'Right ear',shape:'path',d:'M192 55 L224 35 L212 76 Z'}
+ const mouldShapes=[
+  [
+   {id:'head',label:'Head',shape:'rect',x:102,y:34,w:96,h:78,rx:20},
+   {id:'body',label:'Body',shape:'path',d:'M102 132 L198 132 L214 258 Q150 282 86 258 Z'},
+   {id:'leftArm',label:'Left arm',shape:'path',d:'M102 144 L70 158 L42 236 Q39 248 52 254 Q64 259 71 247 L120 188 Z'},
+   {id:'rightArm',label:'Right arm',shape:'path',d:'M198 144 L230 158 L258 236 Q261 248 248 254 Q236 259 229 247 L180 188 Z'},
+   {id:'leftLeg',label:'Left leg',shape:'rect',x:88,y:258,w:54,h:132,rx:14},
+   {id:'rightLeg',label:'Right leg',shape:'rect',x:158,y:258,w:54,h:132,rx:14},
+   {id:'earLeft',label:'Left ear',shape:'rect',x:76,y:58,w:26,h:34,rx:8},
+   {id:'earRight',label:'Right ear',shape:'rect',x:198,y:58,w:26,h:34,rx:8}
+  ],
+  [
+   {id:'head',label:'Head',shape:'circle',cx:150,cy:72,r:46},
+   {id:'body',label:'Body',shape:'path',d:'M105 132 Q150 112 195 132 L210 260 Q150 282 90 260 Z'},
+   {id:'leftArm',label:'Left arm',shape:'path',d:'M105 145 L72 160 L46 238 Q43 250 55 255 Q66 258 71 247 L120 190 Z'},
+   {id:'rightArm',label:'Right arm',shape:'path',d:'M195 145 L228 160 L254 238 Q257 250 245 255 Q234 258 229 247 L180 190 Z'},
+   {id:'leftLeg',label:'Left leg',shape:'path',d:'M94 252 L142 258 L137 382 Q135 394 121 394 L88 394 Q78 390 82 379 Z'},
+   {id:'rightLeg',label:'Right leg',shape:'path',d:'M158 258 L206 252 L218 379 Q222 390 212 394 L179 394 Q165 394 163 382 Z'},
+   {id:'earLeft',label:'Left ear',shape:'path',d:'M108 55 L76 35 L88 76 Z'},
+   {id:'earRight',label:'Right ear',shape:'path',d:'M192 55 L224 35 L212 76 Z'}
+  ],
+  [
+   {id:'head',label:'Head',shape:'path',d:'M105 88 Q104 38 150 28 Q196 38 195 88 Q190 126 150 132 Q110 126 105 88 Z'},
+   {id:'body',label:'Body',shape:'path',d:'M112 132 Q150 116 188 132 L205 264 Q150 294 95 264 Z'},
+   {id:'leftArm',label:'Left arm',shape:'path',d:'M112 144 Q82 148 64 180 L50 260 Q49 276 64 279 Q78 280 82 264 L100 208 L124 188 Z'},
+   {id:'rightArm',label:'Right arm',shape:'path',d:'M188 144 Q218 148 236 180 L250 260 Q251 276 236 279 Q222 280 218 264 L200 208 L176 188 Z'},
+   {id:'leftLeg',label:'Left leg',shape:'path',d:'M96 258 L146 270 L138 392 Q135 402 122 402 L92 402 Q80 398 84 386 Z'},
+   {id:'rightLeg',label:'Right leg',shape:'path',d:'M154 270 L204 258 L216 386 Q220 398 208 402 L178 402 Q165 402 162 392 Z'},
+   {id:'earLeft',label:'Left ear',shape:'path',d:'M108 60 L74 42 L88 92 Z'},
+   {id:'earRight',label:'Right ear',shape:'path',d:'M192 60 L226 42 L212 92 Z'}
+  ]
  ];
- const state={};
- parts.forEach(p=>state[p.id]=colors[0]);
+ let mouldIndex=0,selectedColor=colors[1];
+ let parts=mouldShapes[0].map(p=>({...p}));
+ let state={};
+ const resetState=()=>{state={};parts.forEach(p=>state[p.id]=colors[0])};
+ resetState();
  const shape=(p)=>p.shape==='circle'
   ? '<circle class="mould-part" data-part="'+p.id+'" cx="'+p.cx+'" cy="'+p.cy+'" r="'+p.r+'" fill="'+state[p.id]+'"></circle>'
-  : '<path class="mould-part" data-part="'+p.id+'" d="'+p.d+'" fill="'+state[p.id]+'"></path>';
+  : p.shape==='rect'
+   ? '<rect class="mould-part" data-part="'+p.id+'" x="'+p.x+'" y="'+p.y+'" width="'+p.w+'" height="'+p.h+'" rx="'+p.rx+'" fill="'+state[p.id]+'"></rect>'
+   : '<path class="mould-part" data-part="'+p.id+'" d="'+p.d+'" fill="'+state[p.id]+'"></path>';
+ const face=(index)=>{
+  if(index===0)return '<circle cx="132" cy="67" r="5" fill="#30343b"></circle><circle cx="168" cy="67" r="5" fill="#30343b"></circle><rect x="128" y="82" width="44" height="8" rx="4" fill="#30343b"></rect>';
+  if(index===1)return '<circle cx="134" cy="72" r="5" fill="#30343b"></circle><circle cx="166" cy="72" r="5" fill="#30343b"></circle><path d="M132 92 Q150 103 168 92" fill="none" stroke="#30343b" stroke-width="3" stroke-linecap="round"></path>';
+  return '<circle cx="132" cy="72" r="7" fill="#30343b"></circle><circle cx="168" cy="72" r="7" fill="#30343b"></circle><path d="M130 98 Q150 108 170 98" fill="none" stroke="#30343b" stroke-width="4" stroke-linecap="round"></path>';
+ };
  const draw=()=>{
-  const svg='<svg viewBox="0 0 300 410" role="img" aria-label="'+gameEsc(moulds[mouldIndex])+' full figure mould">'+parts.map(shape).join('')+'<circle cx="134" cy="72" r="5" fill="#30343b"></circle><circle cx="166" cy="72" r="5" fill="#30343b"></circle><path d="M132 92 Q150 103 168 92" fill="none" stroke="#30343b" stroke-width="3" stroke-linecap="round"></path></svg>';
-  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Click any part of the full mould to colour it.</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="mould-picker">'+moulds.map((m,i)=>'<button class="btn '+(i===mouldIndex?'active':'')+'" data-mould="'+i+'" type="button">'+gameEsc(m)+'</button>').join('')+'</div><div class="mould-layout"><div class="mould-stage">'+svg+'</div><div class="mould-info"><b>Choose a colour</b><div class="mould-swatches">'+colors.map((col,i)=>'<button class="mould-swatch '+(col===selectedColor?'active':'')+'" data-colour="'+col+'" style="background:'+col+'" aria-label="Colour '+(i+1)+'" type="button"></button>').join('')+'</div><b>Then click a mould part</b><p class="resource-meta">Every click changes only the selected part. The full figure stays intact.</p><div class="mould-complete">Tip: try different colours for the head, body, arms and legs.</div></div></div></div>';
+  const svg='<svg viewBox="0 0 300 410" role="img" aria-label="'+gameEsc(moulds[mouldIndex])+' full figure mould">'+parts.map(shape).join('')+face(mouldIndex%3)+'</svg>';
+  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">'+gameEsc(moulds[mouldIndex])+' · Click any part of the full mould to colour it.</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="mould-picker">'+moulds.map((m,i)=>'<button class="btn '+(i===mouldIndex?'active':'')+'" data-mould="'+i+'" type="button">'+gameEsc(m)+'</button>').join('')+'</div><div class="mould-layout"><div class="mould-stage">'+svg+'</div><div class="mould-info"><b>Choose a colour</b><div class="mould-swatches">'+colors.map((col,i)=>'<button class="mould-swatch '+(col===selectedColor?'active':'')+'" data-colour="'+col+'" style="background:'+col+'" aria-label="Colour '+(i+1)+'" type="button"></button>').join('')+'</div><b>Then click a mould part</b><p class="resource-meta">Every click changes only the selected part. The full figure stays intact.</p><div class="mould-complete">Robot = mechanical body · Campus Hero = human figure · Alien = creature figure.</div></div></div></div>';
   $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
   document.querySelectorAll('#gamePlayer [data-colour]').forEach(b=>b.onclick=()=>{selectedColor=b.dataset.colour;draw()});
-  document.querySelectorAll('#gamePlayer [data-mould]').forEach(b=>b.onclick=()=>{mouldIndex=Number(b.dataset.mould);parts.forEach(p=>state[p.id]=colors[0]);draw()});
+  document.querySelectorAll('#gamePlayer [data-mould]').forEach(b=>b.onclick=()=>{
+   mouldIndex=Number(b.dataset.mould);
+   parts=mouldShapes[mouldIndex%mouldShapes.length].map(p=>({...p}));
+   resetState();
+   draw();
+  });
   document.querySelectorAll('#gamePlayer [data-part]').forEach(b=>b.onclick=()=>{state[b.dataset.part]=selectedColor;b.setAttribute('fill',selectedColor);});
  };
  draw();
 }
-
 async function saveGameScore(game,score,total){
  try{
   await cloudAdd('GamesScores',{'Score ID':uid(),'Game ID':game.id,'Game Title':game.title,'Player ID':db.profile.id,'Player Name':db.profile.name||'Student',Score:score,Total:total,'Played At':today()});
