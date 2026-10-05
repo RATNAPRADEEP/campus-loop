@@ -1,4 +1,5 @@
 (function(){
+const gameEl=id=>document.getElementById(id);
 const GAMES_KEY='campusloop_games_v1';
 const starterGames=[{
  id:'game-campus-quiz',
@@ -24,7 +25,7 @@ const starterGames=[{
 
 const gameEsc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function gameStyles(){
- if($('campusGamesStyles'))return;
+ if(gameEl('campusGamesStyles'))return;
  const s=document.createElement('style');s.id='campusGamesStyles';s.textContent=`
 #games .page-head{margin-bottom:18px}
 .games-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
@@ -69,7 +70,7 @@ async function loadGamesFromDrive(options={}){
  }
 }
 function renderGames(games){
- const grid=$('gamesGrid');
+ const grid=gameEl('gamesGrid');
  if(!grid)return;
  grid.innerHTML=games.length?games.map(g=>'<article class="game-card">'+(g.coverUrl?'<img src="'+gameEsc(g.coverUrl)+'" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:9px;margin-bottom:4px">':'<div style="font-size:28px">🎮</div>')+'<h3>'+gameEsc(g.title)+'</h3><div class="game-meta">'+gameEsc(g.type)+' · '+gameEsc(g.difficulty||'Normal')+'</div><p>'+gameEsc(g.description||'Play this CampusLoop mini game directly in the app.')+'</p><button class="btn primary game-play" data-play-game="'+gameEsc(g.id)+'">Play now</button></article>').join(''):'<div class="card games-empty"><b>No games available yet.</b><p class="resource-meta">Add a game row to the Google Drive Games sheet to publish it here.</p></div>';
 }
@@ -77,12 +78,12 @@ function playExquisite(game){
  const stages=Array.isArray(game.config?.sections)?game.config.sections:['Head','Body','Legs'];
  const parts=[];
  let stage=0;
- const close=()=>{$('gamePlayer').innerHTML=''};
+ const close=()=>{gameEl('gamePlayer').innerHTML=''};
  const drawStage=()=>{
   const name=stages[stage]||'Part';
-  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Create a creature without seeing the previous parts</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="exquisite-wrap"><div class="exquisite-stage">Part '+(stage+1)+' of '+stages.length+' · '+gameEsc(name)+'</div><div class="exquisite-instruction">Draw your <b>'+gameEsc(name.toLowerCase())+'</b>. The previous player's drawing is hidden. When you finish, pass the device to the next player.</div><div class="exquisite-canvas-wrap"><canvas id="exquisiteCanvas" class="exquisite-canvas" width="720" height="420"></canvas></div><div class="exquisite-actions"><button class="btn" id="clearExquisiteBtn" type="button">Clear</button><button class="btn primary" id="nextExquisiteBtn" type="button">'+(stage===stages.length-1?'Reveal creature':'Next player')+'</button></div></div></div></div>';
-  $('closeGameBtn').onclick=close;
-  const canvas=$('exquisiteCanvas'),ctx=canvas.getContext('2d');
+  gameEl('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Create a creature without seeing the previous parts</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="exquisite-wrap"><div class="exquisite-stage">Part '+(stage+1)+' of '+stages.length+' · '+gameEsc(name)+'</div><div class="exquisite-instruction">Draw your <b>'+gameEsc(name.toLowerCase())+'</b>. The previous player's drawing is hidden. When you finish, pass the device to the next player.</div><div class="exquisite-canvas-wrap"><canvas id="exquisiteCanvas" class="exquisite-canvas" width="720" height="420"></canvas></div><div class="exquisite-actions"><button class="btn" id="clearExquisiteBtn" type="button">Clear</button><button class="btn primary" id="nextExquisiteBtn" type="button">'+(stage===stages.length-1?'Reveal creature':'Next player')+'</button></div></div></div></div>';
+  gameEl('closeGameBtn').onclick=close;
+  const canvas=gameEl('exquisiteCanvas'),ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#202020';
   let drawing=false,hasInk=false;
@@ -91,18 +92,18 @@ function playExquisite(game){
   const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke()};
   const end=()=>{drawing=false;ctx.closePath()};
   canvas.addEventListener('pointerdown',start);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',end);canvas.addEventListener('pointerleave',end);
-  $('clearExquisiteBtn').onclick=()=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);hasInk=false;ctx.strokeStyle='#202020';ctx.lineWidth=5};
-  $('nextExquisiteBtn').onclick=()=>{
+  gameEl('clearExquisiteBtn').onclick=()=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);hasInk=false;ctx.strokeStyle='#202020';ctx.lineWidth=5};
+  gameEl('nextExquisiteBtn').onclick=()=>{
    if(!hasInk){toast('Draw something first.',true);return}
    parts.push(canvas.toDataURL('image/png'));stage++;
    if(stage<stages.length)drawStage();else reveal();
   };
  };
  const reveal=()=>{
-  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Creature revealed!</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="game-result"><div style="font-size:34px">👾</div><div>Meet your mysterious creature</div></div><div class="exquisite-reveal"><canvas id="exquisiteReveal" width="720" height="1260"></canvas></div><div class="exquisite-actions"><button class="btn primary" id="playAgainExquisiteBtn" type="button">Create another</button></div></div>';
-  $('closeGameBtn').onclick=close;
-  $('playAgainExquisiteBtn').onclick=()=>{parts.length=0;stage=0;drawStage()};
-  const out=$('exquisiteReveal'),octx=out.getContext('2d');
+  gameEl('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Creature revealed!</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="game-result"><div style="font-size:34px">👾</div><div>Meet your mysterious creature</div></div><div class="exquisite-reveal"><canvas id="exquisiteReveal" width="720" height="1260"></canvas></div><div class="exquisite-actions"><button class="btn primary" id="playAgainExquisiteBtn" type="button">Create another</button></div></div>';
+  gameEl('closeGameBtn').onclick=close;
+  gameEl('playAgainExquisiteBtn').onclick=()=>{parts.length=0;stage=0;drawStage()};
+  const out=gameEl('exquisiteReveal'),octx=out.getContext('2d');
   octx.fillStyle='#fff';octx.fillRect(0,0,out.width,out.height);
   const loadPart=(src,y)=>new Promise(resolve=>{const im=new Image();im.onload=()=>{octx.drawImage(im,0,y,out.width,420);resolve()};im.src=src});
   (async()=>{for(let i=0;i<parts.length;i++)await loadPart(parts[i],i*420)})();
@@ -111,12 +112,12 @@ function playExquisite(game){
 }
 function playQuiz(game){
  const qs=Array.isArray(game.config?.questions)?game.config.questions:[];
- if(!qs.length){$('gamePlayer').innerHTML='<div class="game-player-body"><p class="resource-meta">This game has no playable questions yet.</p></div>';return}
+ if(!qs.length){gameEl('gamePlayer').innerHTML='<div class="game-player-body"><p class="resource-meta">This game has no playable questions yet.</p></div>';return}
  let index=0,score=0,locked=false;
  const draw=()=>{
   const q=qs[index];
-  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Playing inside CampusLoop · '+(index+1)+' of '+qs.length+'</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="quiz-progress">Question '+(index+1)+' / '+qs.length+'</div><div class="quiz-question">'+gameEsc(q.q)+'</div><div class="quiz-options">'+q.options.map((o,i)=>'<button class="quiz-option" data-answer="'+i+'" type="button">'+gameEsc(o)+'</button>').join('')+'</div></div>';
-  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
+  gameEl('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Playing inside CampusLoop · '+(index+1)+' of '+qs.length+'</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="quiz-progress">Question '+(index+1)+' / '+qs.length+'</div><div class="quiz-question">'+gameEsc(q.q)+'</div><div class="quiz-options">'+q.options.map((o,i)=>'<button class="quiz-option" data-answer="'+i+'" type="button">'+gameEsc(o)+'</button>').join('')+'</div></div>';
+  gameEl('closeGameBtn').onclick=()=>{gameEl('gamePlayer').innerHTML=''};
   document.querySelectorAll('#gamePlayer [data-answer]').forEach(btn=>btn.onclick=()=>{
    if(locked)return;locked=true;
    const chosen=Number(btn.dataset.answer),correct=chosen===Number(q.answer);
@@ -127,9 +128,9 @@ function playQuiz(game){
   });
  };
  const finish=()=>{
-  $('gamePlayer').innerHTML='<div class="game-result"><div style="font-size:34px">🏆</div><div>Game complete</div><strong>'+score+' / '+qs.length+'</strong><p class="resource-meta">'+(score===qs.length?'Perfect score!':score>=Math.ceil(qs.length*.6)?'Great job!':'Good attempt — try again and beat your score.')+'</p><div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn primary" id="playAgainBtn" type="button">Play again</button><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div></div>';
-  $('playAgainBtn').onclick=()=>{index=0;score=0;draw()};
-  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
+  gameEl('gamePlayer').innerHTML='<div class="game-result"><div style="font-size:34px">🏆</div><div>Game complete</div><strong>'+score+' / '+qs.length+'</strong><p class="resource-meta">'+(score===qs.length?'Perfect score!':score>=Math.ceil(qs.length*.6)?'Great job!':'Good attempt — try again and beat your score.')+'</p><div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn primary" id="playAgainBtn" type="button">Play again</button><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div></div>';
+  gameEl('playAgainBtn').onclick=()=>{index=0;score=0;draw()};
+  gameEl('closeGameBtn').onclick=()=>{gameEl('gamePlayer').innerHTML=''};
   saveGameScore(game,score,qs.length);
  };
  draw();
@@ -148,7 +149,7 @@ async function initGames(){
   renderGames(fresh);
  }).catch(()=>{});
  const syncGames=async()=>{
-  const b=$('gamesRefreshBtn');
+  const b=gameEl('gamesRefreshBtn');
   if(!b||b.disabled)return;
   b.disabled=true;b.textContent='Syncing…';
   try{
@@ -162,7 +163,7 @@ async function initGames(){
    toast(e?.message||'Could not sync Games from Google Drive. Built-in games are still available.',true);
   }finally{b.disabled=false;b.textContent='Sync Games'}
  };
- $('gamesRefreshBtn')?.addEventListener('click',syncGames);
+ gameEl('gamesRefreshBtn')?.addEventListener('click',syncGames);
  document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else if(game.type==='exquisite')playExquisite(game);else toast('This game type is not enabled yet.',true)});
 }
 window.initCampusGames=initGames;
