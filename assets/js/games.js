@@ -84,7 +84,7 @@ function playQuiz(game){
  const draw=()=>{
   const q=qs[index];
   $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Playing inside CampusLoop · '+(index+1)+' of '+qs.length+'</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="quiz-progress">Question '+(index+1)+' / '+qs.length+'</div><div class="quiz-question">'+gameEsc(q.q)+'</div><div class="quiz-options">'+q.options.map((o,i)=>'<button class="quiz-option" data-answer="'+i+'" type="button">'+gameEsc(o)+'</button>').join('')+'</div></div>';
-  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
+  $('closeGameBtn').onclick=()=>{stopBattleRoomPolling();$('gamePlayer').innerHTML=''};
   document.querySelectorAll('#gamePlayer [data-answer]').forEach(btn=>btn.onclick=()=>{if(locked)return;locked=true;const chosen=Number(btn.dataset.answer),correct=chosen===Number(q.answer);btn.classList.add(correct?'correct':'wrong');if(correct)score++;document.querySelectorAll('#gamePlayer [data-answer]').forEach(b=>b.disabled=true);setTimeout(()=>{locked=false;index++;if(index<qs.length)draw();else finish();},450);});
  };
  const finish=()=>{$('gamePlayer').innerHTML='<div class="game-result"><div style="font-size:34px">🏆</div><div>Game complete</div><strong>'+score+' / '+qs.length+'</strong><p class="resource-meta">'+(score===qs.length?'Perfect score!':score>=Math.ceil(qs.length*.6)?'Great job!':'Good attempt — try again and beat your score.')+'</p><div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap"><button class="btn primary" id="playAgainBtn" type="button">Play again</button><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div></div>';$('playAgainBtn').onclick=()=>{index=0;score=0;draw()};$('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};saveGameScore(game,score,qs.length);};
@@ -137,6 +137,30 @@ async function joinMultiplayerBattle(roomCode){
  await cloudUpdate('BattleRooms',index+2,{'Player2Id':playerId,'Player2Name':playerName,'Status':'READY','UpdatedAt':now});
  return {roomCode:code,playerId,playerName};
 }
+function stopBattleRoomPolling(){if(window.__campusBattlePoll){clearInterval(window.__campusBattlePoll);window.__campusBattlePoll=null;}}
+async function pollBattleRoom(roomCode,playerId){
+ stopBattleRoomPolling();
+ const check=async()=>{
+  try{
+   const rows=await cloudRead('BattleRooms');
+   const room=rows.find(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());
+   if(!room)return;
+   const status=String(room.Status||'').toUpperCase();
+   const opponentId=String(room.Player1Id||'')===String(playerId) ? String(room.Player2Id||'') : String(room.Player1Id||'');
+   const opponentName=String(room.Player1Id||'')===String(playerId) ? String(room.Player2Name||'') : String(room.Player1Name||'');
+   const box=$('multiplayerLobbyStatus');
+   if(!box)return;
+   if(status==='READY' && opponentId){
+    box.innerHTML='<b>Opponent connected ✓</b><div class="multiplayer-room-code">'+gameEsc(String(roomCode).toUpperCase())+'</div><div class="multiplayer-note">Opponent: '+gameEsc(opponentName||'CampusLoop Player')+' · Both players are ready.</div>';
+    stopBattleRoomPolling();
+   }else if(status==='WAITING'){
+    box.innerHTML='<b>Waiting for opponent…</b><div class="multiplayer-room-code">'+gameEsc(String(roomCode).toUpperCase())+'</div><div class="multiplayer-note">Share this code with your opponent. This lobby checks Google Sheets automatically.</div>';
+   }
+  }catch(e){console.warn('Battle room polling failed',e);}
+ };
+ await check();
+ window.__campusBattlePoll=setInterval(check,3000);
+}
 async function createMultiplayerBattle(game){
  const playerId=String(window.db?.profile?.id||window.db?.profile?.['Student ID']||'player-'+Date.now());
  const playerName=String(window.db?.profile?.name||window.db?.profile?.Name||'CampusLoop Player');
@@ -148,9 +172,9 @@ async function createMultiplayerBattle(game){
 function showMultiplayerLobby(game,backToMould){
  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Multiplayer Battle · Lobby</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="multiplayer-lobby"><div style="font-size:42px">⚔️</div><h3>Campus Mould Battle</h3><p class="resource-meta">Play a hidden-choice battle with another CampusLoop player.</p><div class="multiplayer-actions"><button class="btn primary" id="createBattleBtn" type="button">Create Battle</button><button class="btn" id="joinBattleBtn" type="button">Join Battle</button></div><div id="multiplayerLobbyStatus" class="multiplayer-room"><b>Lobby ready</b><div class="multiplayer-note">Online matchmaking will be connected in the next step.</div></div><button class="btn" id="backToMouldBtn" type="button" style="margin-top:14px">← Back to colouring</button></div></div>';
  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
- $('backToMouldBtn').onclick=()=>backToMould();
- $('createBattleBtn').onclick=async()=>{const b=$('createBattleBtn');b.disabled=true;b.textContent='Creating…';try{const battle=await createMultiplayerBattle(game);$('multiplayerLobbyStatus').innerHTML='<b>Battle room created</b><div class="multiplayer-room-code">'+gameEsc(battle.roomCode)+'</div><div class="multiplayer-note">Share this room code with your opponent. The room is now saved to Google Sheets.</div>';}catch(e){console.error('Battle room creation failed',e);$('multiplayerLobbyStatus').innerHTML='<b>Could not create battle</b><div class="multiplayer-note">'+gameEsc(e.message||'Google Sheets sync failed.')+'</div>';}finally{b.disabled=false;b.textContent='Create Battle';}};
- $('joinBattleBtn').onclick=async()=>{const code=prompt('Enter the Battle Room Code:');if(!code)return;const b=$('joinBattleBtn');b.disabled=true;b.textContent='Joining…';try{const battle=await joinMultiplayerBattle(code);$('multiplayerLobbyStatus').innerHTML='<b>Battle joined</b><div class="multiplayer-room-code">'+gameEsc(battle.roomCode)+'</div><div class="multiplayer-note">Player 2 is now connected. The battle is ready.</div>';}catch(e){console.error('Battle join failed',e);$('multiplayerLobbyStatus').innerHTML='<b>Could not join battle</b><div class="multiplayer-note">'+gameEsc(e.message||'Google Sheets sync failed.')+'</div>';}finally{b.disabled=false;b.textContent='Join Battle';}};
+ $('backToMouldBtn').onclick=()=>{stopBattleRoomPolling();backToMould()};
+ $('createBattleBtn').onclick=async()=>{const b=$('createBattleBtn');b.disabled=true;b.textContent='Creating…';try{const battle=await createMultiplayerBattle(game);$('multiplayerLobbyStatus').innerHTML='<b>Waiting for opponent…</b><div class="multiplayer-room-code">'+gameEsc(battle.roomCode)+'</div><div class="multiplayer-note">Share this code with your opponent. This lobby checks Google Sheets automatically.</div>';pollBattleRoom(battle.roomCode,battle.playerId);}catch(e){console.error('Battle room creation failed',e);$('multiplayerLobbyStatus').innerHTML='<b>Could not create battle</b><div class="multiplayer-note">'+gameEsc(e.message||'Google Sheets sync failed.')+'</div>';}finally{b.disabled=false;b.textContent='Create Battle';}};
+ $('joinBattleBtn').onclick=async()=>{const code=prompt('Enter the Battle Room Code:');if(!code)return;const b=$('joinBattleBtn');b.disabled=true;b.textContent='Joining…';try{const battle=await joinMultiplayerBattle(code);$('multiplayerLobbyStatus').innerHTML='<b>Opponent connected ✓</b><div class="multiplayer-room-code">'+gameEsc(battle.roomCode)+'</div><div class="multiplayer-note">Both players are ready. Opponent connection confirmed.</div>';pollBattleRoom(battle.roomCode,battle.playerId);}catch(e){console.error('Battle join failed',e);$('multiplayerLobbyStatus').innerHTML='<b>Could not join battle</b><div class="multiplayer-note">'+gameEsc(e.message||'Google Sheets sync failed.')+'</div>';}finally{b.disabled=false;b.textContent='Join Battle';}};
 }
 async function saveGameScore(game,score,total){try{await cloudAdd('GamesScores',{'Score ID':uid(),'Game ID':game.id,'Game Title':game.title,'Player ID':db.profile.id,'Player Name':db.profile.name||'Student',Score:score,Total:total,'Played At':today()});}catch(e){console.warn('Game score could not sync to Google Drive',e)}}
 async function initGames(){gameStyles();window.campusLoopGames=starterGames;renderGames(starterGames);loadGamesFromDrive().then(games=>{window.campusLoopGames=games;renderGames(games)}).catch(e=>console.warn('Games background sync failed',e));$('gamesRefreshBtn')?.addEventListener('click',async()=>{const b=$('gamesRefreshBtn');b.disabled=true;b.textContent='Syncing…';try{const fresh=await loadGamesFromDrive();window.campusLoopGames=fresh;renderGames(fresh);toast('Games catalog refreshed from Google Drive.')}finally{b.disabled=false;b.textContent='Sync Games'}});document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else if(game.type==='mould')playMould(game);else toast('This game type is not enabled yet.',true)});}
