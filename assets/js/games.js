@@ -222,8 +222,9 @@ async function pollCharacterReady(roomCode,playerId){
  };
  await check();window.__campusCharacterPoll=setInterval(check,3000);
 }
-function renderMultiplayerBattle(room,roomCode,playerId){
+function renderMultiplayerBattle(room,roomCode,playerId,expectedRound){
  const isP1=String(room.Player1Id||'')===String(playerId);
+ const roundNumber=Number(expectedRound||Number(room.Round||0)+1)||1;
  const playerName=String(isP1?room.Player1Name:room.Player2Name)||'CampusLoop Player';
  const opponentName=String(isP1?room.Player2Name:room.Player1Name)||'CampusLoop Player';
  const character=window.__campusBattleCharacter||{mouldIndex:0,mouldName:'Robot',colors:{}};
@@ -247,7 +248,7 @@ function renderMultiplayerBattle(room,roomCode,playerId){
   catch(e){document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=false);$('rpsStatus').textContent=e.message||'Could not send move.';}
  };
  document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.onclick=()=>setMove(b.dataset.rps));
- pollBattleMove(roomCode,playerId);
+ pollBattleMove(roomCode,playerId,roundNumber);
 }
 async function resolveRpsRound(room,roomCode,playerId){
  const p1=String(room.Player1Move||'').toLowerCase(),p2=String(room.Player2Move||'').toLowerCase();
@@ -262,21 +263,22 @@ async function resolveRpsRound(room,roomCode,playerId){
  if(index<0)return;
  const latest=rows[index];
  if(String(latest.Winner||'').trim())return;
- await cloudUpdate('BattleRooms',index+2,{Round:1,Player1Score:p1Score,Player2Score:p2Score,Winner:winner,UpdatedAt:new Date().toISOString()});
+ await cloudUpdate('BattleRooms',index+2,{Round:roundNumber||1,Player1Score:p1Score,Player2Score:p2Score,Winner:winner,UpdatedAt:new Date().toISOString()});
  const resultBox=$('rpsStatus');
  if(resultBox)resultBox.textContent=result==='DRAW'?'Round 1: Draw 🤝':result==='PLAYER1'?(String(room.Player1Id||'')===String(playerId)?'Round 1: You win! 🎉':'Round 1: Opponent wins.'):String(room.Player2Id||'')===String(playerId)?'Round 1: You win! 🎉':'Round 1: Opponent wins.';
  const opponentStatus=$('opponentMoveStatus');
  if(opponentStatus)opponentStatus.textContent='Round 1 complete ✓ '+p1+' vs '+p2+' · Score '+p1Score+'–'+p2Score;
  document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=true);
 }
-async function pollBattleMove(roomCode,playerId){
+async function pollBattleMove(roomCode,playerId,expectedRound){
  if(window.__campusBattleMovePoll)clearInterval(window.__campusBattleMovePoll);
  const check=async()=>{
   try{
    const rows=await cloudRead('BattleRooms');const room=rows.find(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());if(!room)return;
    const isP1=String(room.Player1Id||'')===String(playerId);const mine=isP1?String(room.Player1Move||''):String(room.Player2Move||'');const opponent=isP1?String(room.Player2Move||''):String(room.Player1Move||'');const status=$('opponentMoveStatus');if(!status)return;
+   const currentRound=Number(room.Round||0);
    const winner=String(room.Winner||'').trim();
-   if(winner){
+   if(currentRound===Number(expectedRound||1) && winner){
     const p1Score=Number(room.Player1Score||0),p2Score=Number(room.Player2Score||0);
     const winnerIsDraw=winner.toUpperCase()==='DRAW';
     const iWon=!winnerIsDraw && winner===String(playerId);
@@ -292,8 +294,9 @@ async function pollBattleMove(roomCode,playerId){
       const latestRows=await cloudRead('BattleRooms');
       const latestIndex=latestRows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());
       if(latestIndex<0)throw new Error('Battle room not found.');
-      await cloudUpdate('BattleRooms',latestIndex+2,{Player1Move:'',Player2Move:'',Round:'',Player1Score:0,Player2Score:0,Winner:'',UpdatedAt:new Date().toISOString()});
-      renderMultiplayerBattle(latestRows[latestIndex],roomCode,playerId);
+      const nextRound=Math.max(1,Number(latestRows[latestIndex].Round||0)+1);
+      await cloudUpdate('BattleRooms',latestIndex+2,{Player1Move:'',Player2Move:'',Round:nextRound,Player1Score:0,Player2Score:0,Winner:'',UpdatedAt:new Date().toISOString()});
+      renderMultiplayerBattle(latestRows[latestIndex],roomCode,playerId,nextRound);
      }catch(e){
       playAgainBtn.disabled=false;
       playAgainBtn.textContent='🔄 Play again';
@@ -305,7 +308,7 @@ async function pollBattleMove(roomCode,playerId){
    }
    status.textContent=opponent?'Opponent has locked a move ✓':'Waiting for opponent to choose a move…';
    if(mine){const r=$('rpsStatus');if(r)r.textContent='Move locked ✓ '+(opponent?'Both moves are ready.':'Waiting for opponent…');}
-   if(mine&&opponent)await resolveRpsRound(room,roomCode,playerId);
+   if(mine&&opponent&&currentRound===Number(expectedRound||1))await resolveRpsRound(room,roomCode,playerId,expectedRound||1);
   }catch(e){console.warn('Battle move polling failed',e);}
  };
  await check();window.__campusBattleMovePoll=setInterval(check,3000);
