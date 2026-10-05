@@ -12,6 +12,12 @@ const starterGames=[{
   {q:'Which section tracks borrowed items?',options:['Profile','Active Loans','Community','Wishlist'],answer:1},
   {q:'What is CampusLoop designed around?',options:['Campus sharing','Food delivery','Video streaming','Online banking'],answer:0}
  ]}
+},{
+ id:'game-campus-moulds',
+ title:'Campus Mould Studio',
+ description:'Pick a full-figure mould and colour each part by clicking it. Build your own campus character.',
+ type:'mould',difficulty:'Easy',status:'Active',
+ config:{moulds:['Robot','Campus Hero','Alien']}
 }];
 
 const gameEsc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -37,7 +43,19 @@ function gameStyles(){
 .quiz-option:hover{border-color:rgba(99,91,255,.35);background:var(--bg)}
 .quiz-option.correct{border-color:#16a34a;background:#f0fdf4}
 .quiz-option.wrong{border-color:#dc2626;background:#fef2f2}
-.game-result{text-align:center;padding:24px 10px}
+.mould-picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.mould-picker .btn.active{border-color:rgba(99,91,255,.45);background:var(--bg)}
+.mould-layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:22px;align-items:start}
+.mould-stage{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fafbff,#fff);padding:16px;min-height:410px;display:flex;align-items:center;justify-content:center}
+.mould-stage svg{width:100%;max-width:300px;height:auto}
+.mould-part{stroke:#30343b;stroke-width:2;cursor:pointer;transition:fill .18s,filter .18s,transform .18s;transform-box:fill-box;transform-origin:center}
+.mould-part:hover{filter:brightness(.96);transform:scale(1.025)}
+.mould-info{border:1px solid var(--line);border-radius:12px;padding:16px}
+.mould-swatches{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+.mould-swatch{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.mould-swatch.active{box-shadow:0 0 0 2px #111}
+.mould-complete{margin-top:14px;font-size:12px;color:var(--muted)}
+@media(max-width:700px){.mould-layout{grid-template-columns:1fr}.mould-stage{min-height:350px}}\n.game-result{text-align:center;padding:24px 10px}
 .game-result strong{display:block;font-size:42px;letter-spacing:-1px;margin:8px 0}
 .games-empty{padding:24px;text-align:center}
 @media(max-width:900px){.games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -87,6 +105,36 @@ function playQuiz(game){
  };
  draw();
 }
+function playMould(game){
+ const moulds=Array.isArray(game.config?.moulds)&&game.config.moulds.length?game.config.moulds:['Campus Hero'];
+ const colors=['#e8edf2','#8ecae6','#90be6d','#f9c74f','#f9844a','#f28482','#b8a1ff','#222831'];
+ let mouldIndex=0,selectedColor=colors[1];
+ const parts=[
+  {id:'head',label:'Head',shape:'circle',cx:150,cy:78,r:46},
+  {id:'body',label:'Body',shape:'path',d:'M105 132 Q150 112 195 132 L210 260 Q150 282 90 260 Z'},
+  {id:'leftArm',label:'Left arm',shape:'path',d:'M105 145 L72 160 L46 238 Q43 250 55 255 Q66 258 71 247 L120 190 Z'},
+  {id:'rightArm',label:'Right arm',shape:'path',d:'M195 145 L228 160 L254 238 Q257 250 245 255 Q234 258 229 247 L180 190 Z'},
+  {id:'leftLeg',label:'Left leg',shape:'path',d:'M94 252 L142 258 L137 382 Q135 394 121 394 L88 394 Q78 390 82 379 Z'},
+  {id:'rightLeg',label:'Right leg',shape:'path',d:'M158 258 L206 252 L218 379 Q222 390 212 394 L179 394 Q165 394 163 382 Z'},
+  {id:'earLeft',label:'Left ear',shape:'path',d:'M108 55 L76 35 L88 76 Z'},
+  {id:'earRight',label:'Right ear',shape:'path',d:'M192 55 L224 35 L212 76 Z'}
+ ];
+ const state={};
+ parts.forEach(p=>state[p.id]=colors[0]);
+ const shape=(p)=>p.shape==='circle'
+  ? '<circle class="mould-part" data-part="'+p.id+'" cx="'+p.cx+'" cy="'+p.cy+'" r="'+p.r+'" fill="'+state[p.id]+'"></circle>'
+  : '<path class="mould-part" data-part="'+p.id+'" d="'+p.d+'" fill="'+state[p.id]+'"></path>';
+ const draw=()=>{
+  const svg='<svg viewBox="0 0 300 410" role="img" aria-label="'+gameEsc(moulds[mouldIndex])+' full figure mould">'+parts.map(shape).join('')+'<circle cx="134" cy="72" r="5" fill="#30343b"></circle><circle cx="166" cy="72" r="5" fill="#30343b"></circle><path d="M132 92 Q150 103 168 92" fill="none" stroke="#30343b" stroke-width="3" stroke-linecap="round"></path></svg>';
+  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Click any part of the full mould to colour it.</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="mould-picker">'+moulds.map((m,i)=>'<button class="btn '+(i===mouldIndex?'active':'')+'" data-mould="'+i+'" type="button">'+gameEsc(m)+'</button>').join('')+'</div><div class="mould-layout"><div class="mould-stage">'+svg+'</div><div class="mould-info"><b>Choose a colour</b><div class="mould-swatches">'+colors.map((col,i)=>'<button class="mould-swatch '+(col===selectedColor?'active':'')+'" data-colour="'+col+'" style="background:'+col+'" aria-label="Colour '+(i+1)+'" type="button"></button>').join('')+'</div><b>Then click a mould part</b><p class="resource-meta">Every click changes only the selected part. The full figure stays intact.</p><div class="mould-complete">Tip: try different colours for the head, body, arms and legs.</div></div></div></div>';
+  $('closeGameBtn').onclick=()=>{$('gamePlayer').innerHTML=''};
+  document.querySelectorAll('#gamePlayer [data-colour]').forEach(b=>b.onclick=()=>{selectedColor=b.dataset.colour;draw()});
+  document.querySelectorAll('#gamePlayer [data-mould]').forEach(b=>b.onclick=()=>{mouldIndex=Number(b.dataset.mould);parts.forEach(p=>state[p.id]=colors[0]);draw()});
+  document.querySelectorAll('#gamePlayer [data-part]').forEach(b=>b.onclick=()=>{state[b.dataset.part]=selectedColor;b.setAttribute('fill',selectedColor);});
+ };
+ draw();
+}
+
 async function saveGameScore(game,score,total){
  try{
   await cloudAdd('GamesScores',{'Score ID':uid(),'Game ID':game.id,'Game Title':game.title,'Player ID':db.profile.id,'Player Name':db.profile.name||'Student',Score:score,Total:total,'Played At':today()});
@@ -98,7 +146,7 @@ async function initGames(){
  window.campusLoopGames=games;
  renderGames(games);
  $('gamesRefreshBtn')?.addEventListener('click',async()=>{const b=$('gamesRefreshBtn');b.disabled=true;b.textContent='Syncing…';const fresh=await loadGamesFromDrive();window.campusLoopGames=fresh;renderGames(fresh);b.disabled=false;b.textContent='Sync Games';toast('Games catalog refreshed from Google Drive.');});
- document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else toast('This game type is not enabled yet.',true)});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else if(game.type==='mould')playMould(game);else toast('This game type is not enabled yet.',true)});
 }
 window.initCampusGames=initGames;
 })();
