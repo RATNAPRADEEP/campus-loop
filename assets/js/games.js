@@ -12,6 +12,14 @@ const starterGames=[{
   {q:'Which section tracks borrowed items?',options:['Profile','Active Loans','Community','Wishlist'],answer:1},
   {q:'What is CampusLoop designed around?',options:['Campus sharing','Food delivery','Video streaming','Online banking'],answer:0}
  ]}
+},{
+ id:'game-exquisite-corpse',
+ title:'Exquisite Creature',
+ description:'Take turns drawing a hidden head, body and legs. Reveal the strange creature at the end!',
+ type:'exquisite',
+ difficulty:'Fun',
+ status:'Active',
+ config:{sections:['Head','Body','Legs']}
 }];
 
 const gameEsc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -62,6 +70,42 @@ function renderGames(games){
  if(!grid)return;
  grid.innerHTML=games.length?games.map(g=>'<article class="game-card">'+(g.coverUrl?'<img src="'+gameEsc(g.coverUrl)+'" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:9px;margin-bottom:4px">':'<div style="font-size:28px">🎮</div>')+'<h3>'+gameEsc(g.title)+'</h3><div class="game-meta">'+gameEsc(g.type)+' · '+gameEsc(g.difficulty||'Normal')+'</div><p>'+gameEsc(g.description||'Play this CampusLoop mini game directly in the app.')+'</p><button class="btn primary game-play" data-play-game="'+gameEsc(g.id)+'">Play now</button></article>').join(''):'<div class="card games-empty"><b>No games available yet.</b><p class="resource-meta">Add a game row to the Google Drive Games sheet to publish it here.</p></div>';
 }
+function playExquisite(game){
+ const stages=Array.isArray(game.config?.sections)?game.config.sections:['Head','Body','Legs'];
+ const parts=[];
+ let stage=0;
+ const close=()=>{$('gamePlayer').innerHTML=''};
+ const drawStage=()=>{
+  const name=stages[stage]||'Part';
+  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Create a creature without seeing the previous parts</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="exquisite-wrap"><div class="exquisite-stage">Part '+(stage+1)+' of '+stages.length+' · '+gameEsc(name)+'</div><div class="exquisite-instruction">Draw your <b>'+gameEsc(name.toLowerCase())+'</b>. The previous player's drawing is hidden. When you finish, pass the device to the next player.</div><div class="exquisite-canvas-wrap"><canvas id="exquisiteCanvas" class="exquisite-canvas" width="720" height="420"></canvas></div><div class="exquisite-actions"><button class="btn" id="clearExquisiteBtn" type="button">Clear</button><button class="btn primary" id="nextExquisiteBtn" type="button">'+(stage===stages.length-1?'Reveal creature':'Next player')+'</button></div></div></div></div>';
+  $('closeGameBtn').onclick=close;
+  const canvas=$('exquisiteCanvas'),ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#202020';
+  let drawing=false,hasInk=false;
+  const pos=e=>{const r=canvas.getBoundingClientRect();const p=e.touches?e.touches[0]:e;return {x:(p.clientX-r.left)*canvas.width/r.width,y:(p.clientY-r.top)*canvas.height/r.height}};
+  const start=e=>{e.preventDefault();drawing=true;hasInk=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y)};
+  const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke()};
+  const end=()=>{drawing=false;ctx.closePath()};
+  canvas.addEventListener('pointerdown',start);canvas.addEventListener('pointermove',move);window.addEventListener('pointerup',end,{once:true});
+  $('clearExquisiteBtn').onclick=()=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);hasInk=false;ctx.strokeStyle='#202020';ctx.lineWidth=5};
+  $('nextExquisiteBtn').onclick=()=>{
+   if(!hasInk){toast('Draw something first.',true);return}
+   parts.push(canvas.toDataURL('image/png'));stage++;
+   if(stage<stages.length)drawStage();else reveal();
+  };
+ };
+ const reveal=()=>{
+  $('gamePlayer').innerHTML='<div class="game-player-head"><div><b>'+gameEsc(game.title)+'</b><div class="resource-meta">Creature revealed!</div></div><button class="btn" id="closeGameBtn" type="button" aria-label="Close game">×</button></div><div class="game-player-body"><div class="game-result"><div style="font-size:34px">👾</div><div>Meet your mysterious creature</div></div><div class="exquisite-reveal"><canvas id="exquisiteReveal" width="720" height="1260"></canvas></div><div class="exquisite-actions"><button class="btn primary" id="playAgainExquisiteBtn" type="button">Create another</button></div></div>';
+  $('closeGameBtn').onclick=close;
+  $('playAgainExquisiteBtn').onclick=()=>{parts.length=0;stage=0;drawStage()};
+  const out=$('exquisiteReveal'),octx=out.getContext('2d');
+  octx.fillStyle='#fff';octx.fillRect(0,0,out.width,out.height);
+  const loadPart=(src,y)=>new Promise(resolve=>{const im=new Image();im.onload=()=>{octx.drawImage(im,0,y,out.width,420);resolve()};im.src=src});
+  (async()=>{for(let i=0;i<parts.length;i++)await loadPart(parts[i],i*420)})();
+ };
+ drawStage();
+}
 function playQuiz(game){
  const qs=Array.isArray(game.config?.questions)?game.config.questions:[];
  if(!qs.length){$('gamePlayer').innerHTML='<div class="game-player-body"><p class="resource-meta">This game has no playable questions yet.</p></div>';return}
@@ -98,7 +142,7 @@ async function initGames(){
  window.campusLoopGames=games;
  renderGames(games);
  $('gamesRefreshBtn')?.addEventListener('click',async()=>{const b=$('gamesRefreshBtn');b.disabled=true;b.textContent='Syncing…';const fresh=await loadGamesFromDrive();window.campusLoopGames=fresh;renderGames(fresh);b.disabled=false;b.textContent='Sync Games';toast('Games catalog refreshed from Google Drive.');});
- document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else toast('This game type is not enabled yet.',true)});
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else if(game.type==='exquisite')playExquisite(game);else toast('This game type is not enabled yet.',true)});
 }
 window.initCampusGames=initGames;
 })();
