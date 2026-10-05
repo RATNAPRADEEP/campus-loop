@@ -87,7 +87,7 @@ function playExquisite(game){
   const start=e=>{e.preventDefault();drawing=true;hasInk=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y)};
   const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke()};
   const end=()=>{drawing=false;ctx.closePath()};
-  canvas.addEventListener('pointerdown',start);canvas.addEventListener('pointermove',move);window.addEventListener('pointerup',end,{once:true});
+  canvas.addEventListener('pointerdown',start);canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerup',end);canvas.addEventListener('pointerleave',end);
   $('clearExquisiteBtn').onclick=()=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);hasInk=false;ctx.strokeStyle='#202020';ctx.lineWidth=5};
   $('nextExquisiteBtn').onclick=()=>{
    if(!hasInk){toast('Draw something first.',true);return}
