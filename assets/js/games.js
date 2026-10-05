@@ -282,8 +282,25 @@ async function pollBattleMove(roomCode,playerId){
     const iWon=!winnerIsDraw && (String(room.Player1Id||'')===String(playerId)?winner===String(room.Player1Name||room.Player1Id||'Player 1'):winner===String(room.Player2Name||room.Player2Id||'Player 2'));
     const result=$('rpsStatus');
     if(result)result.textContent=winnerIsDraw?'Round 1: Draw 🤝':iWon?'Round 1: You win! 🎉':'Round 1: Opponent wins.';
-    status.textContent='Round 1 complete ✓ '+String(room.Player1Move||'')+' vs '+String(room.Player2Move||'')+' · Score '+p1Score+'–'+p2Score;
+    status.innerHTML='Round 1 complete ✓ '+String(room.Player1Move||'')+' vs '+String(room.Player2Move||'')+' · Score '+p1Score+'–'+p2Score+'<div style="margin-top:14px"><button class="btn primary" id="playAgainRpsBtn" type="button">🔄 Play again</button></div>';
     document.querySelectorAll('#gamePlayer [data-rps]').forEach(b=>b.disabled=true);
+    const playAgainBtn=$('playAgainRpsBtn');
+    if(playAgainBtn)playAgainBtn.onclick=async()=>{
+     playAgainBtn.disabled=true;
+     playAgainBtn.textContent='Starting…';
+     try{
+      const latestRows=await cloudRead('BattleRooms');
+      const latestIndex=latestRows.findIndex(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());
+      if(latestIndex<0)throw new Error('Battle room not found.');
+      await cloudUpdate('BattleRooms',latestIndex+2,{Player1Move:'',Player2Move:'',Round:'',Player1Score:0,Player2Score:0,Winner:'',UpdatedAt:new Date().toISOString()});
+      renderMultiplayerBattle(latestRows[latestIndex],roomCode,playerId);
+     }catch(e){
+      playAgainBtn.disabled=false;
+      playAgainBtn.textContent='🔄 Play again';
+      const result=$('rpsStatus');
+      if(result)result.textContent=e.message||'Could not start another round.';
+     }
+    };
     return;
    }
    status.textContent=opponent?'Opponent has locked a move ✓':'Waiting for opponent to choose a move…';
