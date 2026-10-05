@@ -52,17 +52,20 @@ function gameStyles(){
 @media(max-width:650px){.games-grid{grid-template-columns:1fr}.game-player-head{align-items:flex-start;flex-direction:column}.games-toolbar .pill{margin-left:0}}
 `;document.head.appendChild(s);
 }
-async function loadGamesFromDrive(){
+async function loadGamesFromDrive(options={}){
+ const silent=options.silent!==false;
  try{
   const rows=await cloudRead('Games');
   const parsed=rows.map((r,i)=>{
    let config={};try{config=JSON.parse(r['Config JSON']||r.Config||'{}')}catch{}
    return {id:r['Game ID']||r.id||'drive-game-'+i,title:r.Title||r.title||'Campus Game',description:r.Description||r.description||'',type:(r.Type||r.type||'quiz').toLowerCase(),difficulty:r.Difficulty||r.difficulty||'Normal',coverUrl:r['Cover URL']||r.coverUrl||'',status:String(r.Status||'Active'),config};
   }).filter(g=>g.status.toLowerCase()!=='inactive');
-  return parsed.length?parsed:starterGames;
+  if(!parsed.length)throw new Error('The Google Drive Games sheet is empty.');
+  return parsed;
  }catch(e){
   console.warn('CampusLoop Games Drive catalog unavailable',e);
-  return starterGames;
+  if(silent)return starterGames;
+  throw e;
  }
 }
 function renderGames(games){
@@ -140,19 +143,26 @@ async function initGames(){
  gameStyles();
  window.campusLoopGames=starterGames.slice();
  renderGames(window.campusLoopGames);
- loadGamesFromDrive().then(fresh=>{
+ loadGamesFromDrive({silent:true}).then(fresh=>{
   window.campusLoopGames=fresh;
   renderGames(fresh);
  }).catch(()=>{});
- $('gamesRefreshBtn')?.addEventListener('click',async()=>{
-  const b=$('gamesRefreshBtn');b.disabled=true;b.textContent='Syncing…';
+ const syncGames=async()=>{
+  const b=$('gamesRefreshBtn');
+  if(!b||b.disabled)return;
+  b.disabled=true;b.textContent='Syncing…';
   try{
-   const fresh=await loadGamesFromDrive();
-   window.campusLoopGames=fresh;renderGames(fresh);
-   toast('Games catalog refreshed from Google Drive.');
-  }catch(e){toast('Could not sync Games from Google Drive. Built-in games are still available.',true)}
-  finally{b.disabled=false;b.textContent='Sync Games'}
- });
+   const fresh=await loadGamesFromDrive({silent:false});
+   window.campusLoopGames=fresh;
+   renderGames(fresh);
+   toast('Games catalog synced from Google Drive. '+fresh.length+' game'+(fresh.length===1?'':'s')+' loaded.');
+  }catch(e){
+   window.campusLoopGames=starterGames.slice();
+   renderGames(window.campusLoopGames);
+   toast(e?.message||'Could not sync Games from Google Drive. Built-in games are still available.',true);
+  }finally{b.disabled=false;b.textContent='Sync Games'}
+ };
+ $('gamesRefreshBtn')?.addEventListener('click',syncGames);
  document.addEventListener('click',e=>{const b=e.target.closest('[data-play-game]');if(!b)return;const game=window.campusLoopGames?.find(g=>g.id===b.dataset.playGame);if(!game)return;nav('games');if(game.type==='quiz')playQuiz(game);else if(game.type==='exquisite')playExquisite(game);else toast('This game type is not enabled yet.',true)});
 }
 window.initCampusGames=initGames;
