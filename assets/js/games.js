@@ -280,8 +280,10 @@ async function pollBattleMove(roomCode,playerId,expectedRound){
    const rows=await cloudRead('BattleRooms');const room=rows.find(r=>String(r.RoomCode||'').trim().toUpperCase()===String(roomCode).trim().toUpperCase());if(!room)return;
    const isP1=String(room.Player1Id||'')===String(playerId);const mine=isP1?String(room.Player1Move||''):String(room.Player2Move||'');const opponent=isP1?String(room.Player2Move||''):String(room.Player1Move||'');const status=$('opponentMoveStatus');if(!status)return;
    const currentRound=Number(room.Round||0);
+   const expected=Number(expectedRound||1);
+   const roundMatches=currentRound===expected || (currentRound===0 && expected===1);
    const winner=String(room.Winner||'').trim();
-   if(currentRound===Number(expectedRound||1) && winner){
+   if(currentRound===expected && winner){
     const p1Score=Number(room.Player1Score||0),p2Score=Number(room.Player2Score||0);
     const winnerIsDraw=winner.toUpperCase()==='DRAW';
     const iWon=!winnerIsDraw && winner===String(playerId);
@@ -312,7 +314,7 @@ async function pollBattleMove(roomCode,playerId,expectedRound){
    }
    status.textContent=opponent?'Opponent has locked a move ✓':'Waiting for opponent to choose a move…';
    if(mine){const r=$('rpsStatus');if(r)r.textContent='Move locked ✓ '+(opponent?'Both moves are ready.':'Waiting for opponent…');}
-   if(mine&&opponent&&currentRound===Number(expectedRound||1))await resolveRpsRound(room,roomCode,playerId,expectedRound||1);
+   if(mine&&opponent&&roundMatches)await resolveRpsRound(room,roomCode,playerId,expected);
   }catch(e){console.warn('Battle move polling failed',e);}
  };
  await check();window.__campusBattleMovePoll=setInterval(check,3000);
